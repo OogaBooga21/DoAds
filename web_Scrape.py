@@ -133,20 +133,6 @@ from readability import Document
 from urllib.parse import urljoin, urlparse
 import tldextract
 
-# --- The Modern, Reliable Summarization Library ---
-from transformers import pipeline
-
-# Initialize the summarization pipeline. This will download the model on the first run.
-# Using a smaller model like 't5-small' is fast and effective.
-try:
-    summarizer = pipeline("summarization", model="t5-small")
-except Exception as e:
-    print(f"Could not initialize the summarization pipeline. Please ensure you have run:")
-    print(f"pip install transformers torch sentencepiece")
-    print(f"Error: {e}")
-    summarizer = None
-
-
 def is_valid_internal_link(base_url, link):
     if not link:
         return False
@@ -186,31 +172,16 @@ def crawl_website(start_url, keywords=None, max_pages=10):
 
     soup = BeautifulSoup(resp.text, 'html.parser')
     
-    # --- Transformers summarization logic ---
-    for tag in soup(['nav', 'footer', 'header', 'aside', 'script', 'style']):
-        tag.decompose()
-    
-    clean_text = soup.get_text(separator=' ', strip=True)
-    
-    home_page_summary = ""
-    if summarizer and clean_text:
-        try:
-            # The summarizer expects a single block of text.
-            # We set length constraints to get a concise summary.
-            result = summarizer(clean_text, max_length=150, min_length=40, do_sample=False)
-            home_page_summary = result[0]['summary_text']
-        except Exception as e:
-            print(f"Could not summarize, using a snippet instead. Error: {e}")
-            # Fallback to a simple snippet if summarization fails
-            home_page_summary = ' '.join(clean_text.split()[:150])
-    elif clean_text:
-        home_page_summary = ' '.join(clean_text.split()[:150])
+    # --- Clean and save the full readable text of the home page ---
+    doc = Document(resp.text)
+    cleaned_html = doc.summary()
+    soup = BeautifulSoup(cleaned_html, 'html.parser')
+    home_page_text = soup.get_text(separator='\n', strip=True)
 
-
-    if home_page_summary:
+    if home_page_text:
         found_pages["home"] = {
             "url": start_url,
-            "text": home_page_summary
+            "text": home_page_text
         }
     
     # --- Part 2: Find links and get full content for other pages ---
