@@ -1,0 +1,24 @@
+# Virtual Environment
+DoAds/
+/DoAds/
+*.DoAds
+
+info/
+/info/
+*.info
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and editor folders
+.vscode/
+.idea/
+
+# Output files (optional but good practice)
+*.csv
+*.json
+*.bat
+*.spec

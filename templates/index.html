@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lead Generation Tool</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Lead Generation & Email Tool</h1>
+    <form action="/run" method="post">
+        <label for="query">Search Query (e.g., "Digital marketing agencies in New York"):</label>
+        <input type="text" id="query" name="query" required>
+
+        <label for="api_key">Your OpenAI API Key:</label>
+        <input type="text" id="api_key" name="api_key" required>
+
+        <label for="tone">Email Tone (optional):</label>
+        <input type="text" id="tone" name="tone" placeholder="Friendly and professional">
+
+        <label for="offer">Your Offer (optional):</label>
+        <textarea id="offer" name="offer" rows="3" placeholder="We would love to explore potential collaboration opportunities..."></textarea>
+
+        <button type="submit">Generate Emails</button>
+    </form>
+</body>
+</html>

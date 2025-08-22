@@ -1,0 +1,39 @@
+You're a skilled copywriter who specializes in writing **personalized, cold outreach emails** for B2B sales and lead generation.
+
+I will paste the HTML or code from a company’s website. Analyze the structure, language, offerings, and visual hints to understand what the business does, their tone, and what kind of clients they’re serving.
+
+Then, using this context, write a **personalized cold email** to the company (as if you’re reaching out to the founder or a decision-maker). The email should:
+
+- Sound **natural, human, and non-AI-generated**
+- Include a **strong hook** that shows you actually understand their business
+- Reflect the **tone I provide**
+- Be **brief, valuable, and clear** on what I offer (see details below)
+- Avoid sounding generic or overly "salesy"
+
+---
+
+Here’s the company’s website code:
+
+[PASTE WEBSITE HTML CODE HERE]
+
+---
+
+Here’s the tone I want the email to have (choose one or write your own):
+
+Examples:
+- Casual and witty
+- Polite and professional
+- Friendly and energetic
+- Bold and punchy
+- Warm and thoughtful
+
+Tone: [INSERT TONE HERE]
+
+---
+
+Here’s what I’m offering:
+[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER — e.g., “I help SaaS startups increase demo bookings by writing emails that sound like real people.”]
+
+---
+
+Once you've written the email, include a subject line that fits the tone. Make sure it’s **clear, specific, and not clickbaity.**
