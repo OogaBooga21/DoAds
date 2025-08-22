@@ -71,7 +71,7 @@ def extract_info(page,business_cards,max_results):
 
 def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for=1): #0 both, 1 only with websites, 2 only without websites
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)  # Set to True to hide browser
+        browser = p.chromium.launch(headless=True)  # Set to True to hide browser
         context = browser.new_context(locale="en-US")
         page = context.new_page()
 
