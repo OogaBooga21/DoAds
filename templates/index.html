@@ -15,14 +15,27 @@
         <label for="query">Search Query (e.g., "Digital marketing agencies in New York"):</label>
         <input type="text" id="query" name="query" required>
 
+        <label for="prompt_language">Prompt Language:</label>
+<select id="prompt_language" name="prompt_language">
+    <option value="eng_prompt.txt">English</option>
+    <option value="ro_prompt.txt">Romanian</option>
+</select>
+<br><br>
+
         <label for="api_key">Your OpenAI API Key:</label>
         <input type="text" id="api_key" name="api_key" required>
+
+        <label for="gmail_api_key">Your Gmaps API Key (optional):</label>
+        <input type="text" id="gmail_api_key" name="gmail_api_key" placeholder="Nu ne trebuie inca, e pentru mai tarziu">
 
         <label for="tone">Email Tone (optional):</label>
         <input type="text" id="tone" name="tone" placeholder="Friendly and professional">
 
         <label for="offer">Your Offer (optional):</label>
         <textarea id="offer" name="offer" rows="3" placeholder="We would love to explore potential collaboration opportunities..."></textarea>
+
+<label for="additional_instructions">Additional Instructions for GPT (optional):</label>
+<textarea id="additional_instructions" name="additional_instructions" rows="4" placeholder="e.g., Mention our recent award. Keep the email under 150 words."></textarea>
 
         <button type="submit">Generate Emails</button>
     </form>

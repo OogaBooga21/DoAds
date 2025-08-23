@@ -120,13 +120,13 @@ def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for
         
         results = combine_results(results1, results2, merge_key="name")
 
-        # Save to CSV
-        with open(output_csv, mode='w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=["name", "link"])
-            writer.writeheader()
-            writer.writerows(results)
+        # # Save to CSV
+        # with open(output_csv, mode='w', newline='', encoding='utf-8') as f:
+        #     writer = csv.DictWriter(f, fieldnames=["name", "link"])
+        #     writer.writeheader()
+        #     writer.writerows(results)
 
-        print(f"[INFO] Saved {len(results)} leads to {output_csv}")
+        # print(f"[INFO] Saved {len(results)} leads to {output_csv}")
 
         # browser.close()
         return results

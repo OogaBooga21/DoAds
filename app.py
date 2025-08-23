@@ -23,6 +23,9 @@ def run_scraper():
     api_key = request.form['api_key']
     tone = request.form['tone']
     offer = request.form['offer']
+    gmail_api_key = request.form['gmail_api_key']
+    selected_prompt = request.form['prompt_language']
+    additional_instructions = request.form['additional_instructions']
     
     # --- This is the logic from your main.py, now in a function ---
     try:
@@ -41,8 +44,7 @@ def run_scraper():
         client = OpenAI(api_key=api_key)
         # You'll need to slightly modify generate_emails to accept the scrape_results directly
         # instead of reading from a file, and return a DataFrame.
-        emails_df = generate_emails(client, scrape_results, tone, offer) # Modified function call
-        
+        emails_df = generate_emails(client, scrape_results, tone, offer, prompt_filename=selected_prompt, additional_instructions=additional_instructions)
         # 5. Return the CSV file for download
         # Create an in-memory CSV file
         csv_buffer = io.StringIO()
