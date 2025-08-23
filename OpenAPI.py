@@ -1,4 +1,3 @@
-# UC8LN8EyXdU4MuA84eq8F7cozsktyi5Zocq5j7ebbcUCntUBpw 
 
 from urllib2 import Request, urlopen
 
