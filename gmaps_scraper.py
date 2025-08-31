@@ -103,7 +103,7 @@ def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for
 
         # Scroll the results panel to load more businesses
         scrollable_div = page.locator('div[role="feed"]')
-        for i in range(2): ##############################################################################################
+        for i in range(8): ##############################################################################################
             scrollable_div.evaluate("el => el.scrollBy(0, el.scrollHeight)")
             print(f"[INFO] Scrolling... ({i+1}/8)")
             time.sleep(2)
@@ -130,10 +130,3 @@ def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for
 
         # browser.close()
         return results
-
-# query = "Digital marketing agencies in New York"
-# # query = "Coffe Shops in Sibiu"
-
-# leads = get_leads_from_Maps(query, max_results=10, search_for=0)  # 0 for both, 1 for with websites, 2 for without websites
-# for lead in leads:
-#     print(lead)

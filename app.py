@@ -27,18 +27,33 @@ def run_scraper():
     selected_prompt = request.form['prompt_language']
     additional_instructions = request.form['additional_instructions']
     
+    max_results = request.form.get('max_results', 5, type=int)
+    # Enforce a maximum of 50 results for security
+    if max_results > 50:
+        max_results = 50
+    
     # --- This is the logic from your main.py, now in a function ---
     try:
         # 2. Get leads from Google Maps
-        leads = get_leads_from_Maps(query, max_results=5, search_for=1)
+        leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
         
         # 3. Scrape websites
         scrape_results = []
         for lead in leads:
-            scraped_info = crawl_website(lead['link'], keywords=["about", "team", "services", "contact"])
-            if scraped_info:
-                result_entry = {"name": lead['name'], "pages": scraped_info}
-                scrape_results.append(result_entry)
+            if lead.get('link') and lead['link'] != "No Website":
+                print(f"Scraping website for {lead['name']}: {lead['link']}")
+                scraped_data = crawl_website(lead['link'], keywords=["about", "team", "services", "contact"])
+
+                # Check if the scraper returned pages
+                if scraped_data and scraped_data.get('pages'):
+                    result_entry = {
+                        "name": lead['name'], 
+                        "pages": scraped_data['pages'],
+                        "email": scraped_data.get('email')  # Get the email from the scraper's result
+                    }
+                    scrape_results.append(result_entry)
+            else:
+                print(f"Skipping {lead['name']} because no website was found.")
 
         # 4. Generate emails
         client = OpenAI(api_key=api_key)

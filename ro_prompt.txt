@@ -1,23 +1,41 @@
-Scrie un email de cold outreach în limba română, personalizat pentru compania descrisă mai jos. Emailul trebuie să respecte următoarele cerințe:
+You're a skilled copywriter who specializes in writing **personalized, cold outreach emails** for B2B sales and lead generation.
 
-1. Tonul: {formal / informal / relaxat}
-2. Scopul emailului: {ex: oferirea unui demo, propunere de colaborare, ofertă de servicii, consultanță gratuită etc.}
-3. Despre noi (expeditorul): {descriere scurtă despre compania/serviciul nostru, misiune, expertiză, diferențiatori etc.}
-4. Despre compania target: {ce știm despre ei – industrie, servicii, noutăți recente, mărime, tonul lor de comunicare, probleme/obiective posibile etc.}
+I will paste the HTML or code from a company’s website. Analyze the structure, language, offerings, and visual hints to understand what the business does, their tone, and what kind of clients they’re serving.
 
-Structura emailului trebuie să includă:
+Then, using this context, write a **personalized cold email** to the company (as if you’re reaching out to the founder or a decision-maker). The email should:
 
-O deschidere naturală, potrivită tonului ales
+- Sound **natural, human, and non-AI-generated**
+- Include a **strong hook** that shows you actually understand their business
+- Reflect the **tone I provide**
+- Be **brief, valuable, and clear** on what I offer (see details below)
+- Avoid sounding generic or overly "salesy"
 
-O frază care arată că știm cine sunt și cu ce se ocupă
+---
 
-Prezentarea scurtă a valorii pe care o putem aduce (pain-solution)
+Here’s the company’s website code:
 
-Un element de credibilitate (ex: expertiză, clienți existenți, rezultate etc.)
+[PASTE WEBSITE HTML CODE HERE]
 
-Un apel la acțiune (ex: „vă pot arăta într-un demo”, „ne putem auzi 15 minute?”, etc.)
+---
 
-O formulă de încheiere personală, non-agresivă
+Here’s the tone I want the email to have (choose one or write your own):
 
-✅ Emailul NU trebuie să pară automatizat sau generat de AI. Evită formule de genul „Sper că acest mesaj vă găsește bine.”
-✅ Include o propoziție scurtă de tip opt-out (ex: „Dacă nu e relevant, dați-mi un semn și nu mai revin.”)
+Examples:
+- Casual and witty
+- Polite and professional
+- Friendly and energetic
+- Bold and punchy
+- Warm and thoughtful
+
+Tone: [INSERT TONE HERE]
+
+---
+
+Here’s what I’m offering:
+[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER — e.g., “I help SaaS startups increase demo bookings by writing emails that sound like real people.”]
+
+---
+
+Once you've written the email, include a subject line that fits the tone. Make sure it’s **clear, specific, and not clickbaity.**
+
+Te rog urmeaza instructiunile si genereaza emailurile IN LIMBA ROMANA

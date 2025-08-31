@@ -175,6 +175,7 @@ def generate_emails(client, scraped_data, tone="Friendly and professional", offe
             
             results.append({
                 'company_name': company_name,
+                'contact_email': website.get('email'), # Get the email passed from app.py
                 'subject': subject,
                 'email_body': body,
                 'tone_used': tone,

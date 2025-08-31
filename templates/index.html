@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -39,5 +39,100 @@
 
         <button type="submit">Generate Emails</button>
     </form>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Generation Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-8">
+                <h1 class="text-2xl font-bold text-gray-900">AI Lead Generation Assistant</h1>
+                <p class="mt-2 text-gray-600">Find leads, scrape their websites, and generate personalized outreach emails.</p>
+
+                <form action="/run" method="post" class="mt-8 space-y-6">
+                    <!-- Section 1: Search & API -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search & API Settings</h2>
+                        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Query (matches your backend) -->
+                            <div>
+                                <label for="query" class="block text-sm font-medium text-gray-700">Google Maps Query</label>
+                                <input type="text" name="query" id="query" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York">
+                            </div>
+                            <!-- API Key (matches your backend) -->
+                            <div>
+                                <label for="api_key" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
+                                <input type="password" name="api_key" id="api_key" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
+                            </div>
+                            <!-- GMaps API Key (matches your backend) -->
+                             <div>
+                                <label for="gmail_api_key" class="block text-sm font-medium text-gray-700">Google Maps API Key (Optional)</label>
+                                <input type="text" name="gmail_api_key" id="gmail_api_key" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Optional for later use">
+                            </div>
+                            <!-- NEW: Max Results -->
+                            <div>
+                                <label for="max_results" class="block text-sm font-medium text-gray-700">Max Results (up to 50)</label>
+                                <input type="number" name="max_results" id="max_results" value="5" min="1" max="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Email Content -->
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Email Personalization</h2>
+                        <div class="mt-4 space-y-4">
+                           <!-- Offer (matches your backend) -->
+                            <div>
+                                <label for="offer" class="block text-sm font-medium text-gray-700">Your Offer</label>
+                                <textarea name="offer" id="offer" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Describe your service or product clearly. E.g., 'I help SaaS startups increase demo bookings.'"></textarea>
+                            </div>
+                            <!-- Tone (matches your backend) -->
+                            <div>
+                                <label for="tone" class="block text-sm font-medium text-gray-700">Email Tone</label>
+                                <input type="text" name="tone" id="tone" required value="Polite and professional" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Casual and witty, Bold and direct">
+                            </div>
+                             <!-- Additional Instructions (matches your backend) -->
+                             <div>
+                                <label for="additional_instructions" class="block text-sm font-medium text-gray-700">Additional Instructions (Optional)</label>
+                                <textarea name="additional_instructions" id="additional_instructions" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Mention our recent award, avoid talking about pricing."></textarea>
+                            </div>
+                             <!-- Prompt Language (matches your backend) -->
+                            <div>
+                                <label for="prompt_language" class="block text-sm font-medium text-gray-700">Prompt Language</label>
+                                 <select name="prompt_language" id="prompt_language" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="eng_prompt.txt" selected>English</option>
+                                    <option value="ro_prompt.txt">Romanian</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Generate & Download CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
