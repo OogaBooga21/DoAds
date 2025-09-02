@@ -1,41 +1,34 @@
-You're a skilled copywriter who specializes in writing **personalized, cold outreach emails** for B2B sales and lead generation.
+Your task is to write an email based on the following context:
 
-I will paste the HTML or code from a company’s website. Analyze the structure, language, offerings, and visual hints to understand what the business does, their tone, and what kind of clients they’re serving.
-
-Then, using this context, write a **personalized cold email** to the company (as if you’re reaching out to the founder or a decision-maker). The email should:
-
-- Sound **natural, human, and non-AI-generated**
-- Include a **strong hook** that shows you actually understand their business
-- Reflect the **tone I provide**
-- Be **brief, valuable, and clear** on what I offer (see details below)
-- Avoid sounding generic or overly "salesy"
-
----
-
-Here’s the company’s website code:
-
+Business information (scraped from their website or other sources):
 [PASTE WEBSITE HTML CODE HERE]
 
----
+Main message / offer:
+[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER]
 
-Here’s the tone I want the email to have (choose one or write your own):
+Tone to use:
+[INSERT TONE HERE]
 
-Examples:
-- Casual and witty
-- Polite and professional
-- Friendly and energetic
-- Bold and punchy
-- Warm and thoughtful
+Guidelines:
+- Personalize the email using details about the business where relevant.  
+  Useful details may include (if available from the scraped content):
+  • The company’s mission or vision  
+  • Their products or services  
+  • Recent news, updates, or announcements  
+  • Team size, leadership, or culture  
+  • Industries or clients they serve  
+  • Unique approaches, technologies, or differentiators  
+  • Locations or offices mentioned  
+- Naturally connect the offer to the business’s context in a way that feels tailored.  
+- Make the email flow like a genuine human conversation, not a template.  
+- Do NOT use emojis, bullet points, numbered lists, or em dashes.   
+- End with a polite call to action (e.g., suggesting a quick call or offering to share more info).  
+- Always include a respectful opt-out option at the end (e.g., “If you’d prefer not to receive further emails, just let me know.”).  
 
-Tone: [INSERT TONE HERE]
+Output format:
+Start with a subject line prefixed with “Subject: ”  
+Follow with the body of the email.
 
----
-
-Here’s what I’m offering:
-[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER — e.g., “I help SaaS startups increase demo bookings by writing emails that sound like real people.”]
-
----
-
-Once you've written the email, include a subject line that fits the tone. Make sure it’s **clear, specific, and not clickbaity.**
+The email should be ready to send.
 
 Te rog urmeaza instructiunile si genereaza emailurile IN LIMBA ROMANA

@@ -155,7 +155,7 @@ def generate_emails(client, scraped_data, tone="Friendly and professional", offe
                 prompt += f"\n\nAdditional Instructions:\n{additional_instructions}"
             
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": "You are a skilled copywriter specializing in personalized cold outreach emails."},
                     {"role": "user", "content": prompt}
@@ -178,8 +178,8 @@ def generate_emails(client, scraped_data, tone="Friendly and professional", offe
                 'contact_email': website.get('email'), # Get the email passed from app.py
                 'subject': subject,
                 'email_body': body,
-                'tone_used': tone,
-                'offer_used': offer
+                # 'tone_used': tone,
+                # 'offer_used': offer
             })
             
             print(f"✓ Generated email for {company_name}")

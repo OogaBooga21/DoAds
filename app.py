@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, send_file
 import os
 import io
 import pandas as pd
+import json
+import io
+from flask import send_file
 
 # Import your existing functions
 from gmaps_scraper import get_leads_from_Maps
@@ -62,15 +65,15 @@ def run_scraper():
         emails_df = generate_emails(client, scrape_results, tone, offer, prompt_filename=selected_prompt, additional_instructions=additional_instructions)
         # 5. Return the CSV file for download
         # Create an in-memory CSV file
-        csv_buffer = io.StringIO()
-        emails_df.to_csv(csv_buffer, index=False, encoding='utf-8')
-        csv_buffer.seek(0)
-        
+        json_buffer = io.StringIO()
+        emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
+        json_buffer.seek(0)
+
         return send_file(
-            io.BytesIO(csv_buffer.getvalue().encode()),
-            mimetype='text/csv',
+            io.BytesIO(json_buffer.getvalue().encode("utf-8")),
+            mimetype="application/json",
             as_attachment=True,
-            download_name='generated_emails.csv'
+            download_name="generated_emails.json"
         )
 
     except Exception as e:
