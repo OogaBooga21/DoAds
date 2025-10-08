@@ -20,67 +20,19 @@ def get_readable_text(url):
     try:
         resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
         resp.raise_for_status()
+        if not resp.text.strip():  # skip empty pages
+            print("  -> Page is empty, skipping.")
+            return None
     except requests.RequestException:
         return None
 
-    doc = Document(resp.text)
-    soup = BeautifulSoup(doc.summary(), 'html.parser')
-    return soup.get_text(separator='\n', strip=True)
-
-# def crawl_website(start_url, keywords=None, max_pages=10):
-#     if keywords is None:
-#         keywords = ["about", "team", "services", "careers", "contact", "servicii","despre","despre-noi","despre-mine", "echipa", "cariera", "contacte","oferte","produse","produse","preturi"]
-    
-#     found_pages = {}
-    
-#     # --- Part 1: Scrape and SUMMARIZE the Home Page using Transformers ---
-#     print(f"Scraping and summarizing home page: {start_url}")
-#     try:
-#         resp = requests.get(start_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-#         resp.raise_for_status()
-#     except requests.RequestException as e:
-#         print(f"Fatal: Could not fetch the start_url. Exiting. Error: {e}")
-#         return {}
-
-#     soup = BeautifulSoup(resp.text, 'html.parser')
-    
-#     # --- Clean and save the full readable text of the home page ---
-#     doc = Document(resp.text)
-#     cleaned_html = doc.summary()
-#     soup = BeautifulSoup(cleaned_html, 'html.parser')
-#     home_page_text = soup.get_text(separator='\n', strip=True)
-
-#     if home_page_text:
-#         found_pages["home"] = {
-#             "url": start_url,
-#             "text": home_page_text
-#         }
-    
-#     # --- Part 2: Find links and get full content for other pages ---
-#     candidate_links = set()
-#     full_soup = BeautifulSoup(resp.text, 'html.parser')
-#     for link in full_soup.find_all("a", href=True):
-#         href = urljoin(start_url, link['href'])
-#         if is_valid_internal_link(start_url, href) and href != start_url:
-#             candidate_links.add(href)
-
-#     for url in candidate_links:
-#         if len(found_pages) >= max_pages:
-#             print("Reached max pages limit.")
-#             break
-        
-#         for keyword in keywords:
-#             if keyword in url.lower():
-#                 if keyword not in found_pages:
-#                     content = get_readable_text(url)
-#                     if content:
-#                         found_pages[keyword] = {
-#                             "url": url,
-#                             "text": content
-#                         }
-#                 break 
-
-#     return found_pages
+    try:
+        doc = Document(resp.text)
+        soup = BeautifulSoup(doc.summary(), 'html.parser')
+        return soup.get_text(separator='\n', strip=True)
+    except Exception as e:
+        print(f"  -> Could not parse page with readability: {e}")
+        return None
 
 def crawl_website(start_url, keywords=None, max_pages=10):
     """
@@ -107,10 +59,14 @@ def crawl_website(start_url, keywords=None, max_pages=10):
     emails_on_home = re.findall(email_regex, initial_html)
     all_emails.update(emails_on_home)
 
-    doc = Document(initial_html)
-    cleaned_html = doc.summary()
-    soup = BeautifulSoup(cleaned_html, 'html.parser')
-    home_page_text = soup.get_text(separator='\n', strip=True)
+    try:
+        doc = Document(initial_html)
+        cleaned_html = doc.summary()
+        soup = BeautifulSoup(cleaned_html, 'html.parser')
+        home_page_text = soup.get_text(separator='\n', strip=True)
+    except Exception as e:
+        print(f"Could not parse homepage with readability: {e}")
+        home_page_text = None
 
     if home_page_text:
         found_pages["home"] = {

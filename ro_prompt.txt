@@ -21,13 +21,16 @@ Guidelines:
   • Locations or offices mentioned  
 - Naturally connect the offer to the business’s context in a way that feels tailored.  
 - Make the email flow like a genuine human conversation, not a template.  
-- Do NOT use emojis, bullet points, numbered lists, or em dashes.   
+- Do NOT use emojis, bullet points, numbered lists, or em dashes.  
 - End with a polite call to action (e.g., suggesting a quick call or offering to share more info).  
 - Always include a respectful opt-out option at the end (e.g., “If you’d prefer not to receive further emails, just let me know.”).  
 
+Carefully examine information scraped from the website, identify the most important/relevant details, and rank them in a list of 5-7 elements.
+
 Output format:
-Start with a subject line prefixed with “Subject: ”  
+Start with a subject line prefixed with “Subejct: ”  
 Follow with the body of the email.
+After the body of the email use this specific sepparator "$$$$$" and add the list of relevant information scraped from the website.
 
 The email should be ready to send.
 

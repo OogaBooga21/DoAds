@@ -66,8 +66,6 @@ def extract_info(page,business_cards,max_results):
             "link": website_href
         })
     return results
-    
-    
 
 def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for=1): #0 both, 1 only with websites, 2 only without websites
     with sync_playwright() as p:
@@ -120,13 +118,4 @@ def get_leads_from_Maps(query,output_csv="leads.csv", max_results=50, search_for
         
         results = combine_results(results1, results2, merge_key="name")
 
-        # # Save to CSV
-        # with open(output_csv, mode='w', newline='', encoding='utf-8') as f:
-        #     writer = csv.DictWriter(f, fieldnames=["name", "link"])
-        #     writer.writeheader()
-        #     writer.writerows(results)
-
-        # print(f"[INFO] Saved {len(results)} leads to {output_csv}")
-
-        # browser.close()
         return results

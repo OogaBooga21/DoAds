@@ -7,6 +7,11 @@ info/
 /info/
 *.info
 
+*test*
+*copy*
+*legacy*
+*private*
+
 # Python cache files
 __pycache__/
 *.pyc
