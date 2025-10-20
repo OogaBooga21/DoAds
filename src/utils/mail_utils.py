@@ -1,21 +1,23 @@
-import requests
-import re
-from typing import List, Dict, Set
 import os
-import pandas as pd
+import re
+from typing import Dict, List, Set
 
+import pandas as pd
+import requests
+
+from importlib.resources import files
 # Path to the blacklist file
 BLACKLIST_FILE = "mail_blacklist.txt"
+
 
 def load_blacklist() -> Set[str]:
     """Loads the blacklist domains from a text file."""
     blacklist = set()
     try:
-        # Get the directory of the current script
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(script_dir, BLACKLIST_FILE)
+# Replace os.path logic with the package resolver
+        resource_path = files('src.resources') / BLACKLIST_FILE
         
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(resource_path, 'r', encoding='utf-8') as f:
             for line in f:
                 domain = line.strip().lower()
                 if domain:
@@ -28,8 +30,10 @@ def load_blacklist() -> Set[str]:
         print(f"An error occurred while reading the blacklist file: {e}")
         return set()
 
+
 # Load the blacklist at the module level
 BASE_FREE_DOMAINS = load_blacklist()
+
 
 def extract_domains_from_emails(emails: List[str]) -> Dict[str, str]:
     """
@@ -38,11 +42,11 @@ def extract_domains_from_emails(emails: List[str]) -> Dict[str, str]:
     subdomains, country-specific TLDs, and common typos.
     """
     domain_to_email_map = {}
-    
+
     # Pre-compile the regex pattern for efficiency
     if not BASE_FREE_DOMAINS:
         return {}
-    
+
     free_domains_pattern = "|".join(re.escape(d) for d in BASE_FREE_DOMAINS)
     free_domains_regex = re.compile(rf".*({free_domains_pattern}).*")
 
@@ -50,18 +54,19 @@ def extract_domains_from_emails(emails: List[str]) -> Dict[str, str]:
         match = re.search(r"@([^@]+)", email)
         if not match:
             continue
-            
+
         domain = match.group(1).lower()
-        
+
         # Check if the domain contains any of the base free domains from the blacklist
         if free_domains_regex.search(domain):
             continue
-        
+
         # If it's not a free domain, add it to the map
         if domain not in domain_to_email_map:
             domain_to_email_map[domain] = email
-            
+
     return domain_to_email_map
+
 
 def find_website_for_domain(domain: str) -> str | None:
     """
@@ -74,7 +79,7 @@ def find_website_for_domain(domain: str) -> str | None:
         f"http://www.{domain}",
         f"http://{domain}",
     ]
-    
+
     for url in patterns:
         try:
             response = requests.head(url, timeout=5, allow_redirects=True)
@@ -83,40 +88,40 @@ def find_website_for_domain(domain: str) -> str | None:
                 return response.url
         except requests.RequestException:
             continue
-            
+
     print(f"[INFO] Could not resolve a working website for {domain}")
     return None
+
 
 def find_websites_from_emails(emails: List[str]) -> List[Dict[str, str]]:
     """
     Main synchronous function to process a list of emails and find their websites.
     This is the primary function to be imported into your Flask app.
-    
+
     Args:
         emails: A list of email addresses.
-        
+
     Returns:
         A list of dictionaries in a format compatible with the main app workflow:
         [{'name': domain, 'link': website_url, 'email': original_email}]
     """
     domain_to_email_map = extract_domains_from_emails(emails)
     results_list = []
-    
+
     if not domain_to_email_map:
         return results_list
-        
+
     for domain, original_email in domain_to_email_map.items():
         print(f"-> Searching for website for domain: {domain}")
         website_url = find_website_for_domain(domain)
-        
+
         if website_url:
-            results_list.append({
-                "name": domain,
-                "link": website_url,
-                "email": original_email
-            })
-            
+            results_list.append(
+                {"name": domain, "link": website_url, "email": original_email}
+            )
+
     return results_list
+
 
 def get_email_list_from_csv(file_path: str) -> list:
     """
@@ -140,14 +145,14 @@ def get_email_list_from_csv(file_path: str) -> list:
         if name in df_columns_lower:
             email_column = df.columns[df_columns_lower.index(name)]
             break
-    
+
     if email_column:
         email_list = df[email_column].dropna().tolist()
         return email_list
     else:
         print("Error: Could not find a column named 'Email' or 'Emails' in the file.")
         return []
-    
+
 
 # BASE_FREE_DOMAINS = load_blacklist()
 # email_list = get_email_list_from_csv("/home/oli/Documents/Work/Nita/Down/Export Lista activa 5 sept.csv")

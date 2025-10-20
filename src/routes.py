@@ -1,56 +1,52 @@
-from flask import Flask, render_template, request, send_file
-import os
+from flask import Blueprint, render_template, request, send_file, jsonify
 import io
-import pandas as pd
 import json
-import io
-from flask import send_file
-
-# Import your existing functions
-from gmaps_scraper import get_leads_from_Maps
-from web_Scrape import crawl_website
-from prompt import generate_emails
+import pandas as pd
 from openai import OpenAI
 
-from web_from_mail import get_email_list_from_csv, find_websites_from_emails
+main_bp = Blueprint('main', __name__)
 
-app = Flask(__name__)
+from scrapers.gmaps_scraper import get_leads_from_Maps
+from scrapers.web_scraper import crawl_website # NOTE: Rename this file to web_scraper.py later
+from utils.prompt_utils import generate_emails
+from utils.mail_utils import get_email_list_from_csv, find_websites_from_emails
 
-@app.route('/')
+@main_bp.route('/')
 def index():
-    # This will show a simple HTML form to the user
     return render_template('index.html')
 
-@app.route('/run', methods=['POST'])
+@main_bp.route('/run', methods=['POST'])
 def run_scraper():
-    query = request.form['query']
-    api_key = request.form['api_key']
-    tone = request.form['tone']
-    offer = request.form['offer']
-    gmail_api_key = request.form.get('gmail_api_key')  # Use .get for optional field
-    selected_prompt = request.form['prompt_language']
-    additional_instructions = request.form['additional_instructions']
-    
-    max_results = request.form.get('max_results', 5, type=int)
+    query = request.form["query"]
+    api_key = request.form["api_key"]
+    tone = request.form["tone"]
+    offer = request.form["offer"]
+    gmail_api_key = request.form.get("gmail_api_key")  # Use .get for optional field
+    selected_prompt = request.form["prompt_language"]
+    additional_instructions = request.form["additional_instructions"]
+
+    max_results = request.form.get("max_results", 5, type=int)
     if max_results > 50:
         max_results = 50
-    
+
     try:
         # 2. Get leads from Google Maps
         leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
-        
+
         # 3. Scrape websites
         scrape_results = []
         for lead in leads:
-            if lead.get('link') and lead['link'] != "No Website":
+            if lead.get("link") and lead["link"] != "No Website":
                 print(f"Scraping website for {lead['name']}: {lead['link']}")
-                scraped_data = crawl_website(lead['link'], keywords=["about", "team", "services", "contact"])
+                scraped_data = crawl_website(
+                    lead["link"], keywords=["about", "team", "services", "contact"]
+                )
 
-                if scraped_data and scraped_data.get('pages'):
+                if scraped_data and scraped_data.get("pages"):
                     result_entry = {
-                        "name": lead['name'], 
-                        "pages": scraped_data['pages'],
-                        "email": scraped_data.get('email')
+                        "name": lead["name"],
+                        "pages": scraped_data["pages"],
+                        "email": scraped_data.get("email"),
                     }
                     scrape_results.append(result_entry)
             else:
@@ -58,8 +54,15 @@ def run_scraper():
 
         # 4. Generate emails
         client = OpenAI(api_key=api_key)
-        emails_df = generate_emails(client, scrape_results, tone, offer, prompt_filename=selected_prompt, additional_instructions=additional_instructions)
-        
+        emails_df = generate_emails(
+            client,
+            scrape_results,
+            tone,
+            offer,
+            prompt_filename=selected_prompt,
+            additional_instructions=additional_instructions,
+        )
+
         # 5. Return the JSON file for download
         json_buffer = io.StringIO()
         emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
@@ -69,22 +72,22 @@ def run_scraper():
             io.BytesIO(json_buffer.getvalue().encode("utf-8")),
             mimetype="application/json",
             as_attachment=True,
-            download_name="generated_emails.json"
+            download_name="generated_emails.json",
         )
 
     except Exception as e:
         return f"An error occurred: {str(e)}"
-
-@app.route('/run_from_mail', methods=['POST'])
+    
+@main_bp.route('/run_from_mail', methods=['POST'])
 def run_from_mail():
     # 1. Get user input and uploaded file
-    api_key = request.form['api_key']
-    tone = request.form['tone']
-    offer = request.form['offer']
-    selected_prompt = request.form['prompt_language']
-    additional_instructions = request.form['additional_instructions']
-    email_file = request.files.get('email_file')
-    
+    api_key = request.form["api_key"]
+    tone = request.form["tone"]
+    offer = request.form["offer"]
+    selected_prompt = request.form["prompt_language"]
+    additional_instructions = request.form["additional_instructions"]
+    email_file = request.files.get("email_file")
+
     if not email_file:
         return "No file uploaded.", 400
 
@@ -94,23 +97,26 @@ def run_from_mail():
 
         if not emails:
             return "No emails found in the uploaded file.", 400
-            
+
         # 3. Find websites from the emails
         leads = find_websites_from_emails(emails)
-        
+
         # 4. Scrape websites and generate emails
         scrape_results = []
         for lead in leads:
             # We must use the link from find_websites_from_emails
-            if lead.get('link'):
+            if lead.get("link"):
                 print(f"Scraping website for {lead['name']}: {lead['link']}")
-                scraped_data = crawl_website(lead['link'], keywords=["about", "team", "services", "contact"])
+                scraped_data = crawl_website(
+                    lead["link"], keywords=["about", "team", "services", "contact"]
+                )
 
-                if scraped_data and scraped_data.get('pages'):
+                if scraped_data and scraped_data.get("pages"):
                     result_entry = {
-                        "name": lead['name'], 
-                        "pages": scraped_data['pages'],
-                        "email": scraped_data.get('email') or lead.get('email') # Use email from scraper or original
+                        "name": lead["name"],
+                        "pages": scraped_data["pages"],
+                        "email": scraped_data.get("email")
+                        or lead.get("email"),  # Use email from scraper or original
                     }
                     scrape_results.append(result_entry)
             else:
@@ -118,8 +124,15 @@ def run_from_mail():
 
         # 5. Generate emails with OpenAI
         client = OpenAI(api_key=api_key)
-        emails_df = generate_emails(client, scrape_results, tone, offer, prompt_filename=selected_prompt, additional_instructions=additional_instructions)
-        
+        emails_df = generate_emails(
+            client,
+            scrape_results,
+            tone,
+            offer,
+            prompt_filename=selected_prompt,
+            additional_instructions=additional_instructions,
+        )
+
         # 6. Return the JSON file for download
         json_buffer = io.StringIO()
         emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
@@ -129,28 +142,33 @@ def run_from_mail():
             io.BytesIO(json_buffer.getvalue().encode("utf-8")),
             mimetype="application/json",
             as_attachment=True,
-            download_name="generated_emails.json"
+            download_name="generated_emails.json",
         )
-    
+
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
-    
-@app.route('/auto_offer', methods=['POST'])
+
+@main_bp.route('/auto_offer', methods=['POST'])
 def auto_offer():
-    api_key = request.form['api_key']
-    url = request.form['url']
-    additional_info = request.form.get('additional_info', '')
+    api_key = request.form["api_key"]
+    url = request.form["url"]
+    additional_info = request.form.get("additional_info", "")
 
     try:
         client = OpenAI(api_key=api_key)
         print(f"[INFO] Scraping website for Auto-Offer: {url}")
         scraped_data = crawl_website(url)
 
-        if not scraped_data or not scraped_data.get('pages'):
-            return {"error": "Could not extract meaningful content from the website."}, 400
+        if not scraped_data or not scraped_data.get("pages"):
+            return {
+                "error": "Could not extract meaningful content from the website."
+            }, 400
 
         combined_text = "\n\n".join(
-            [f"Page: {page_name}\n{page_data['text']}" for page_name, page_data in scraped_data['pages'].items()]
+            [
+                f"Page: {page_name}\n{page_data['text']}"
+                for page_name, page_data in scraped_data["pages"].items()
+            ]
         )
 
         prompt = f"""
@@ -170,11 +188,14 @@ Create a concise, professional offer summary in 3-5 paragraphs.
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a marketing expert who writes clear, persuasive offers."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a marketing expert who writes clear, persuasive offers.",
+                },
+                {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=800
+            max_tokens=800,
         )
 
         summary_text = response.choices[0].message.content.strip()
@@ -183,10 +204,3 @@ Create a concise, professional offer summary in 3-5 paragraphs.
 
     except Exception as e:
         return {"error": str(e)}, 500
-
-    
-
-if __name__ == '__main__':
-    # Use os.environ.get for port, required by hosting services
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)

@@ -1,19 +1,22 @@
+import re
+from urllib.parse import urljoin, urlparse
+
 import requests
+import tldextract
 from bs4 import BeautifulSoup
 from readability import Document
-from urllib.parse import urljoin, urlparse
-import tldextract
-import re
+
 
 def is_valid_internal_link(base_url, link):
     if not link:
         return False
-    if link.startswith('#') or link.startswith('mailto:') or link.startswith('tel:'):
+    if link.startswith("#") or link.startswith("mailto:") or link.startswith("tel:"):
         return False
     parsed_link = urlparse(urljoin(base_url, link))
     base_domain = tldextract.extract(base_url).domain
     link_domain = tldextract.extract(parsed_link.netloc).domain
     return base_domain == link_domain
+
 
 def get_readable_text(url):
     print(f"  -> Scraping full text from: {url}")
@@ -28,25 +31,45 @@ def get_readable_text(url):
 
     try:
         doc = Document(resp.text)
-        soup = BeautifulSoup(doc.summary(), 'html.parser')
-        return soup.get_text(separator='\n', strip=True)
+        soup = BeautifulSoup(doc.summary(), "html.parser")
+        return soup.get_text(separator="\n", strip=True)
     except Exception as e:
         print(f"  -> Could not parse page with readability: {e}")
         return None
+
 
 def crawl_website(start_url, keywords=None, max_pages=10):
     """
     Crawls a website, extracts text from relevant pages, and finds the first email address.
     """
     if keywords is None:
-        keywords = ["about", "team", "services", "careers", "contact", "servicii","despre","despre-noi","despre-mine", "echipa", "cariera", "contacte","oferte","produse","produse","preturi"]
-    
+        keywords = [
+            "about",
+            "team",
+            "services",
+            "careers",
+            "contact",
+            "servicii",
+            "despre",
+            "despre-noi",
+            "despre-mine",
+            "echipa",
+            "cariera",
+            "contacte",
+            "oferte",
+            "produse",
+            "produse",
+            "preturi",
+        ]
+
     found_pages = {}
-    all_emails = set() # Use a set to store unique emails
+    all_emails = set()  # Use a set to store unique emails
 
     print(f"Scraping home page: {start_url}")
     try:
-        resp = requests.get(start_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        resp = requests.get(
+            start_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10
+        )
         resp.raise_for_status()
         initial_html = resp.text
     except requests.RequestException as e:
@@ -62,23 +85,20 @@ def crawl_website(start_url, keywords=None, max_pages=10):
     try:
         doc = Document(initial_html)
         cleaned_html = doc.summary()
-        soup = BeautifulSoup(cleaned_html, 'html.parser')
-        home_page_text = soup.get_text(separator='\n', strip=True)
+        soup = BeautifulSoup(cleaned_html, "html.parser")
+        home_page_text = soup.get_text(separator="\n", strip=True)
     except Exception as e:
         print(f"Could not parse homepage with readability: {e}")
         home_page_text = None
 
     if home_page_text:
-        found_pages["home"] = {
-            "url": start_url,
-            "text": home_page_text
-        }
+        found_pages["home"] = {"url": start_url, "text": home_page_text}
 
     # --- Part 2: Find links and scrape other pages ---
     candidate_links = set()
-    full_soup = BeautifulSoup(initial_html, 'html.parser')
+    full_soup = BeautifulSoup(initial_html, "html.parser")
     for link in full_soup.find_all("a", href=True):
-        href = urljoin(start_url, link['href'])
+        href = urljoin(start_url, link["href"])
         if is_valid_internal_link(start_url, href) and href != start_url:
             candidate_links.add(href)
 
@@ -91,7 +111,9 @@ def crawl_website(start_url, keywords=None, max_pages=10):
             if keyword in url.lower() and keyword not in found_pages:
                 # We need the full text to find emails
                 try:
-                    page_resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+                    page_resp = requests.get(
+                        url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10
+                    )
                     page_resp.raise_for_status()
                     page_html = page_resp.text
 
@@ -100,14 +122,11 @@ def crawl_website(start_url, keywords=None, max_pages=10):
 
                     content = get_readable_text(url)
                     if content:
-                        found_pages[keyword] = {
-                            "url": url,
-                            "text": content
-                        }
+                        found_pages[keyword] = {"url": url, "text": content}
                 except requests.RequestException:
                     # If a sub-page fails, just skip it
                     print(f"  -> Could not scrape sub-page: {url}")
-                break 
+                break
 
     # --- Part 3: Return the pages and the first email found ---
     first_email = list(all_emails)[0] if all_emails else None
