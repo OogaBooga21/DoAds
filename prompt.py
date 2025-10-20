@@ -52,28 +52,48 @@ def generate_emails(client, scraped_data, tone="Friendly and professional", offe
             email_content = response.choices[0].message.content
             
             # Split the response into ranked list and email
+            # if '$$$$$' in email_content:
+            #     parts = email_content.split('$$$$$', 1)
+            #     ranked_list = parts[1].strip()
+            #     email_text = parts[0].strip()
+            # else:
+            #     ranked_list = ""
+            #     email_text = email_content
+
             if '$$$$$' in email_content:
                 parts = email_content.split('$$$$$', 1)
-                ranked_list = parts[1].strip()
-                email_text = parts[0].strip()
+                email_part = parts[0].strip()
+                remaining_part = parts[1].strip()
+                
+                # Then split remaining part by ##### to separate relevant info from activity domain
+                if '#####' in remaining_part:
+                    info_parts = remaining_part.split('#####', 1)
+                    ranked_list = info_parts[0].strip()
+                    activity_domain = info_parts[1].strip()
+                else:
+                    ranked_list = remaining_part
+                    activity_domain = ""  # Default if not found
             else:
+                # Fallback if separators are missing
+                email_part = email_content
                 ranked_list = ""
-                email_text = email_content
-            
+                activity_domain = ""
+
             # Split email into subject and body
-            if "\n\n" in email_text:
-                subject, body = email_text.split("\n\n", 1)
+            if "\n\n" in email_part:
+                subject, body = email_part.split("\n\n", 1)
                 subject = subject.replace("Subject: ", "").strip()
             else:
                 subject = f"Collaboration Opportunity with {company_name}"
-                body = email_text
+                body = email_part
             
             results.append({
                 'company_name': company_name,
                 'contact_email': website.get('email'),
                 'subject': subject,
                 'email_body': body,
-                'ranked_list': ranked_list  # New field for the ranked list
+                'ranked_list': ranked_list,
+                'activity_domain': activity_domain
             })
             
             print(f"✓ Generated email for {company_name}")

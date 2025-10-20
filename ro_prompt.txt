@@ -31,7 +31,7 @@ Output format:
 Start with a subject line prefixed with “Subejct: ”  
 Follow with the body of the email.
 After the body of the email use this specific sepparator "$$$$$" and add the list of relevant information scraped from the website.
-
+After the relevant information section use the specific operator "#####" and to add the activity domain of the scraped website
 The email should be ready to send.
 
 Te rog urmeaza instructiunile si genereaza emailurile IN LIMBA ROMANA
