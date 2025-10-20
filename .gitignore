@@ -11,6 +11,7 @@ info/
 *copy*
 *legacy*
 *private*
+*hidden*
 
 # Python cache files
 __pycache__/

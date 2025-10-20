@@ -2,33 +2,41 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import Blueprint, render_template, request, send_file
+from flask import request, send_file
 
-from scrapers.gmaps_scraper import get_leads_from_Maps
+
 from scrapers.web_scraper import crawl_website
+from utils.mail_utils import get_email_list_from_csv, find_websites_from_emails
 from utils.prompt_utils import generate_emails
 
-def leads_from_gmaps_service():
-    query = request.form["query"]
+
+def leads_from_mail_service():
+    # 1. Get user input and uploaded file
     api_key = request.form["api_key"]
     tone = request.form["tone"]
     offer = request.form["offer"]
-    gmail_api_key = request.form.get("gmail_api_key")  # Use .get for optional field
     selected_prompt = request.form["prompt_language"]
     additional_instructions = request.form["additional_instructions"]
+    email_file = request.files.get("email_file")
 
-    max_results = request.form.get("max_results", 5, type=int)
-    if max_results > 50:
-        max_results = 50
+    if not email_file:
+        return "No file uploaded.", 400
 
     try:
-        # 2. Get leads from Google Maps
-        leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
+        # 2. Read emails from the uploaded CSV
+        emails = get_email_list_from_csv(email_file)
 
-        # 3. Scrape websites
+        if not emails:
+            return "No emails found in the uploaded file.", 400
+
+        # 3. Find websites from the emails
+        leads = find_websites_from_emails(emails)
+
+        # 4. Scrape websites and generate emails
         scrape_results = []
         for lead in leads:
-            if lead.get("link") and lead["link"] != "No Website":
+            # We must use the link from find_websites_from_emails
+            if lead.get("link"):
                 print(f"Scraping website for {lead['name']}: {lead['link']}")
                 scraped_data = crawl_website(
                     lead["link"], keywords=["about", "team", "services", "contact"]
@@ -38,13 +46,14 @@ def leads_from_gmaps_service():
                     result_entry = {
                         "name": lead["name"],
                         "pages": scraped_data["pages"],
-                        "email": scraped_data.get("email"),
+                        "email": scraped_data.get("email")
+                        or lead.get("email"),  # Use email from scraper or original
                     }
                     scrape_results.append(result_entry)
             else:
                 print(f"Skipping {lead['name']} because no website was found.")
 
-        # 4. Generate emails
+        # 5. Generate emails with OpenAI
         client = OpenAI(api_key=api_key)
         emails_df = generate_emails(
             client,
@@ -55,7 +64,7 @@ def leads_from_gmaps_service():
             additional_instructions=additional_instructions,
         )
 
-        # 5. Return the JSON file for download
+        # 6. Return the JSON file for download
         json_buffer = io.StringIO()
         emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
         json_buffer.seek(0)
@@ -68,4 +77,4 @@ def leads_from_gmaps_service():
         )
 
     except Exception as e:
-        return f"An error occurred: {str(e)}"
+        return f"An error occurred: {str(e)}", 500
