@@ -5,9 +5,9 @@ from openai import OpenAI
 from flask import request, send_file
 
 
-from scrapers.web_scraper import crawl_website
-from utils.mail_utils import get_email_list_from_csv, find_websites_from_emails
-from utils.prompt_utils import generate_emails
+from src.scrapers.web_scraper import crawl_website
+from src.utils.mail_utils import get_email_list_from_csv, find_websites_from_emails
+from src.utils.prompt_utils import generate_emails
 
 
 def leads_from_mail_service():

@@ -4,9 +4,9 @@ import pandas as pd
 from openai import OpenAI
 from flask import Blueprint, render_template, request, send_file
 
-from scrapers.gmaps_scraper import get_leads_from_Maps
-from scrapers.web_scraper import crawl_website
-from utils.prompt_utils import generate_emails
+from src.scrapers.gmaps_scraper import get_leads_from_Maps
+from src.scrapers.web_scraper import crawl_website
+from src.utils.prompt_utils import generate_emails
 
 def leads_from_gmaps_service():
     query = request.form["query"]

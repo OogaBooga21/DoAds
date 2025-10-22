@@ -2,7 +2,8 @@ import json
 import pandas as pd
 from openai import OpenAI
 from flask import request
-from scrapers.web_scraper import crawl_website
+
+from src.scrapers.web_scraper import crawl_website
 
 
 def auto_offer_service():

@@ -2,9 +2,9 @@ from flask import Blueprint, render_template
 
 main_bp = Blueprint('main', __name__)
 
-from services.leads_from_gmaps import leads_from_gmaps_service
-from services.leads_from_mail import leads_from_mail_service
-from services.auto_offer import auto_offer_service
+from .services.leads_from_gmaps import leads_from_gmaps_service
+from .services.leads_from_mail import leads_from_mail_service
+from .services.auto_offer import auto_offer_service
 
 
 @main_bp.route('/')
