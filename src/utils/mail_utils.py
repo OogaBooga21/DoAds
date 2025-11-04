@@ -14,7 +14,6 @@ def load_blacklist() -> Set[str]:
     """Loads the blacklist domains from a text file."""
     blacklist = set()
     try:
-# Replace os.path logic with the package resolver
         resource_path = files('src.resources') / BLACKLIST_FILE
         
         with open(resource_path, 'r', encoding='utf-8') as f:

@@ -49,16 +49,41 @@ def generate_emails(
             company_name = website["name"]
             pages = website["pages"]
 
-            combined_text = "\n\n".join(
-                [
-                    f"Page: {page_name}\n{page_data['text']}"
-                    for page_name, page_data in pages.items()
-                ]
-            )
+            # NEW: Structure the content for the LLM using recognized stems/keys
+            page_keys = pages.keys()
+            structured_content = []
+
+            # --- 1. UNIFY CORE CONTEXT (ABOUT/DESPRE) ---
+            about_text = None
+            if 'about' in page_keys:
+                about_text = pages['about']['text']
+            elif 'despre' in page_keys:
+                about_text = pages['despre']['text']
+                
+            if about_text:
+                # Use a single, clear label for the LLM regardless of the source language
+                structured_content.append(f"--- CORE CONTEXT: ABOUT/MISSION/STORY ---\n{about_text}")
+                
+            # --- 2. PRODUCTS/SERVICES ---
+            if 'service' in page_keys:
+                structured_content.append(f"--- PRODUCTS/SERVICES/OFFERS ---\n{pages['service']['text']}")
+                
+            # --- 3. HOMEPAGE ---
+            # Include only if it hasn't been used for the 'about' context
+            if 'home' in page_keys:
+                structured_content.append(f"--- HOMEPAGE CONTENT (General/Backup) ---\n{pages['home']['text']}")
+
+            processed_keys = {'about', 'despre', 'service', 'home'}
+            for key, data in pages.items():
+                if key not in processed_keys: 
+                    structured_content.append(f"--- OTHER PAGE: {key.upper()} ---\n{data['text']}")
+
+            combined_text = "\n\n".join(structured_content)
 
             prompt = prompt_template.replace(
                 "[PASTE WEBSITE HTML CODE HERE]", combined_text
             )
+            
             prompt = prompt.replace("[INSERT TONE HERE]", tone)
             prompt = prompt.replace(
                 "[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER]", offer
@@ -82,15 +107,6 @@ def generate_emails(
             )
 
             email_content = response.choices[0].message.content
-
-            # Split the response into ranked list and email
-            # if '$$$$$' in email_content:
-            #     parts = email_content.split('$$$$$', 1)
-            #     ranked_list = parts[1].strip()
-            #     email_text = parts[0].strip()
-            # else:
-            #     ranked_list = ""
-            #     email_text = email_content
 
             if "$$$$$" in email_content:
                 parts = email_content.split("$$$$$", 1)

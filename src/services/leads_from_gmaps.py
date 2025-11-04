@@ -13,7 +13,7 @@ def leads_from_gmaps_service():
     api_key = request.form["api_key"]
     tone = request.form["tone"]
     offer = request.form["offer"]
-    gmail_api_key = request.form.get("gmail_api_key")  # Use .get for optional field
+    gmail_api_key = request.form.get("gmail_api_key")  #.get for optional field
     selected_prompt = request.form["prompt_language"]
     additional_instructions = request.form["additional_instructions"]
 
@@ -22,10 +22,10 @@ def leads_from_gmaps_service():
         max_results = 50
 
     try:
-        # 2. Get leads from Google Maps
+        # Google Maps
         leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
 
-        # 3. Scrape websites
+        # Scrape
         scrape_results = []
         for lead in leads:
             if lead.get("link") and lead["link"] != "No Website":
@@ -44,7 +44,7 @@ def leads_from_gmaps_service():
             else:
                 print(f"Skipping {lead['name']} because no website was found.")
 
-        # 4. Generate emails
+        # Generate
         client = OpenAI(api_key=api_key)
         emails_df = generate_emails(
             client,
@@ -55,7 +55,7 @@ def leads_from_gmaps_service():
             additional_instructions=additional_instructions,
         )
 
-        # 5. Return the JSON file for download
+        # Return
         json_buffer = io.StringIO()
         emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
         json_buffer.seek(0)

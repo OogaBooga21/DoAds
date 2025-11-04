@@ -1,5 +1,19 @@
 Your task is to write an email based on the following context:
 
+--- STRICT INSTRUCTIONS: FILTERS AND QUALITY CHECK ---
+
+1.  **CRITICAL QUALITY/DOMAIN CHECK:** Before generating the email, analyze the overall content and business domain:
+    a.  **LOW-QUALITY/INCOMPLETE:** IF the provided Business information is too short, low-quality, or consists mostly of placeholder text, your ENTIRE output must be the single keyword: **INCOMPLETE$$$$$INCOMPLETE#####INCOMPLETE**. Do NOT generate an email.
+    b.  **MARKETING AGENCY FILTER:** IF the company's primary activity is clearly a **Marketing Agency, SEO Company** your ENTIRE output must be the single keyword: **MARKETING_AGENCY$$$$$MARKETING_AGENCY#####MARKETING_AGENCY**. Do NOT generate an email.
+
+2.  **GREETING LOGIC:**
+    * First, try to identify a person's name (e.g., near 'CEO', 'Founder', or on the contact/team pages). If a reliable name is found, use it (e.g., 'Hello [Name],').
+    * If no reliable name is found, use the full business name (e.g., 'Hello [Company Name] Team,').
+    * If the company name is unclear or generic, use a generic greeting like **'Hello,'** or **'Salut,'**.
+    * **CRITICAL:** Explicitly ignore placeholder text like `[NAME]`, `[NUME]`, `[COMPANY]`, or generic "Contact Person".
+
+--- END STRICT INSTRUCTIONS ---
+
 Business information (scraped from their website or other sources):
 [PASTE WEBSITE HTML CODE HERE]
 
@@ -10,8 +24,13 @@ Tone to use:
 [INSERT TONE HERE]
 
 Guidelines:
-- Personalize the email using details about the business where relevant.  
-  Useful details may include (if available from the scraped content):
+- Personalize the email using details about the business where relevant.
+- **CONTEXT PRIORITIZATION:** When analyzing the content:
+    * **For E-commerce:** Determine the **theme or niche** of the shop (e.g., handmade jewelry, sustainable pet supplies), and focus on that general concept, *not* on individual, specific products.
+    * **For Journals/News Sites:** Determine the **general focus** (e.g., local politics, tech reviews, financial news), and focus on that scope, *not* on the details of one recent article.
+    * Prioritize content from the `CORE CONTEXT` and `PRODUCTS/SERVICES` sections.
+- **EMAIL FLOW:** Dedicate the **first paragraph** (or main starting focus) to the **client's business and context**, making a tailored observation and connecting it to the offer. Introduce your offer and credentials in the second paragraph. **Focus on the client first.**
+- Useful details may include (if available from the scraped content):
   • The company’s mission or vision  
   • Their products or services  
   • Recent news, updates, or announcements  
@@ -19,18 +38,16 @@ Guidelines:
   • Industries or clients they serve  
   • Unique approaches, technologies, or differentiators  
   • Locations or offices mentioned  
-- Naturally connect the offer to the business’s context in a way that feels tailored.  
-- Make the email flow like a genuine human conversation, not a template.  
-- Do NOT use emojis, bullet points, numbered lists, or em dashes.  
-- End with a polite call to action (e.g., suggesting a quick call or offering to share more info).  
-- Always include a respectful opt-out option at the end (e.g., “If you’d prefer not to receive further emails, just let me know.”).  
-
-Carefully examine information scraped from the website, identify the most important/relevant details, and rank them in a list of 5-7 elements.
-
+- Naturally connect the offer to the business’s context in a way that feels tailored.
+- Make the email flow like a genuine human conversation, not a template.
+- Do NOT use emojis, bullet points, numbered lists, or em dashes.
+- End with a polite call to action (e.g., suggesting a quick call or offering to share more info).
+- Always include a respectful opt-out option at the end (e.g., “If you’d prefer not to receive further emails, just let me know.”).
+- Carefully examine information scraped from the website, identify the most important/relevant details, and rank them in a list of 5-7 elements.
 
 Output format:
-Start with a subject line prefixed with “Subejct: ”  
+Start with a subject line. The subject MUST be personalized, clear, and designed to generate curiosity or state a clear benefit to the client
 Follow with the body of the email.
-After the body of the email use this specific sepparator "$$$$$" and add the list of relevant information scraped from the website.
+After the body of the email use this specific separator "$$$$$" and add the list of relevant information scraped from the website.
 After the relevant information section use the specific operator "#####" and to add the activity domain of the company
 The email should be ready to send.
