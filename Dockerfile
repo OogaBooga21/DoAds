@@ -15,9 +15,3 @@ RUN playwright install chromium
 
 # Copy all your project files into the container
 COPY . .
-
-# Tell the container to expose port 10000 for web traffic
-EXPOSE 10000
-
-# The command to run your web app when the container starts
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "--timeout", "240", "app:app"]
