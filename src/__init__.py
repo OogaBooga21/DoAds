@@ -33,7 +33,7 @@ def create_app(test_config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
 
         # --- CELERY CONFIGURATION (Task Queue) ---
-        CELERY_BROKER_URL=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'), 
+        CELERY_BROKER_URL=os.environ.get('REDIS_URL'), 
         CELERY_RESULT_BACKEND=os.environ.get('POSTGRES_URL_RESULT', db_uri),
         
         # Add a custom variable if you want to use the app's internal key for non-user tasks
