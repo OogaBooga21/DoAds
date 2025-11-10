@@ -1,2 +1,2 @@
-web: gunicorn --bind 0.0.0.0:$PORT app:app
+web: sleep infinity
 release: flask db upgrade >&2
