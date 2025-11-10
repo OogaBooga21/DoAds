@@ -1,2 +1,1 @@
-release: flask db upgrade > /tmp/release.log 2>&1
-web: tail -f /tmp/release.log
+web: gunicorn --bind 0.0.0.0:$PORT --timeout 240 app:app
