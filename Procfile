@@ -1,2 +1,2 @@
-web: sleep infinity
-release: flask db upgrade >&2
+release: flask db upgrade > /tmp/release.log 2>&1
+web: tail -f /tmp/release.log
