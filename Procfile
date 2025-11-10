@@ -1,2 +1,2 @@
-release: FLASK_APP=app.py flask db upgrade
-web: gunicorn --bind 0.0.0.0:$PORT --timeout 240 --log-level debug app:app
+release: echo "--- Running database migrations ---" && FLASK_APP=app.py flask db upgrade && echo "--- Database migrations finished ---"
+web: echo "--- Starting web server ---" && gunicorn --bind 0.0.0.0:$PORT --timeout 240 --log-level debug app:app
