@@ -22,12 +22,14 @@ def create_app(test_config=None):
     logging.basicConfig(level=logging.DEBUG)
     app = Flask(__name__, instance_relative_config=True)
 
+    db_uri = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite').replace("postgres://", "postgresql://", 1)
+
     app.config.from_mapping(
         # Use environment variable for SECRET_KEY, fallback to 'dev'
         SECRET_KEY=os.environ.get('SECRET_KEY', 'dev'), 
         
         # --- DATABASE CONFIGURATION ---
-        SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite').replace("postgres://", "postgresql://", 1),
+        SQLALCHEMY_DATABASE_URI=db_uri,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
 
         # --- CELERY CONFIGURATION (Task Queue) ---
