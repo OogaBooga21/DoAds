@@ -1,2 +1,1 @@
-release: echo "--- Running database migrations ---" && FLASK_APP=app.py flask db upgrade && echo "--- Database migrations finished ---"
-web: echo "--- Starting web server ---" && gunicorn --bind 0.0.0.0:$PORT --timeout 240 --log-level debug app:app
+web: echo "--- Starting simple test ---" && sleep 300 && echo "--- Simple test finished ---"
