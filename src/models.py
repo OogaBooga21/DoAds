@@ -2,7 +2,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON
 
 # Import 'db' from the application factory defined in __init__.py
 from . import db
@@ -47,7 +47,7 @@ class Task(db.Model):
     # Status and Output
     status = db.Column(db.String(50), default='PENDING', index=True) # PENDING, RUNNING, SUCCESS, FAILURE
     # JSONB is highly efficient for storing structured JSON/dictionary data in Postgres
-    output = db.Column(JSONB) 
+    output = db.Column(db.JSON) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
