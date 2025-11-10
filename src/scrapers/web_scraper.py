@@ -294,7 +294,7 @@ def crawl_website(start_url, keywords=None, max_pages=10):
     print(f"Scraping website: {start_url}")
     
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=False)
+        browser = p.firefox.launch(headless=True)
         page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
         
         # --- Home Page Fetch and Processing ---
