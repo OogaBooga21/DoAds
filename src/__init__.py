@@ -19,7 +19,7 @@ def load_user(user_id):
 
 def create_app(test_config=None):
     import logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     app = Flask(__name__, instance_relative_config=True)
 
     db_uri = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite').replace("postgres://", "postgresql://", 1)

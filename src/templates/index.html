@@ -32,6 +32,7 @@
                     <button id="scrapeTab" class="tab-btn">Scrape Tool</button>
                     <button id="mailTab" class="tab-btn">Mail to Lead</button>
                     <button id="autoOfferTab" class="tab-btn">Auto-Offer</button>
+                    <a href="{{ url_for('main.tasks') }}" class="tab-btn">My Tasks</a>
                 </div>
             </div>
         </div>
@@ -39,6 +40,7 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-4 py-8 md:py-12">
+        {% block content %}
         <!-- Tab Content: Scrape Tool -->
         <div id="scrapeContent" class="tab-content">
             <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
@@ -171,50 +173,51 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="autoOfferContent" class="tab-content hidden">
-    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        <div class="p-8">
-            <h1 class="text-2xl font-bold text-gray-900">Auto-Offer Generator</h1>
-            <p class="mt-2 text-gray-600">Paste a company’s website URL and automatically generate a professional offer summary.</p>
+        <div id="autoOfferContent" class="tab-content hidden">
+            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-8">
+                    <h1 class="text-2xl font-bold text-gray-900">Auto-Offer Generator</h1>
+                    <p class="mt-2 text-gray-600">Paste a company’s website URL and automatically generate a professional offer summary.</p>
 
-            <form id="autoOfferForm" action="/auto_offer" method="post" class="mt-8 space-y-6">
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Website & API Key</h2>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
-                            <input type="url" name="url" id="url" required
-                                placeholder="https://example.com"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        </div>
+                    <form id="autoOfferForm" action="/auto_offer" method="post" class="mt-8 space-y-6">
                         <div>
-                            <label for="api_key_auto" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                            <input type="password" name="api_key" id="api_key_auto" required
-                                placeholder="sk-..."
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Website & API Key</h2>
+                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="md:col-span-2">
+                                    <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
+                                    <input type="url" name="url" id="url" required
+                                        placeholder="https://example.com"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                                <div>
+                                    <label for="api_key_auto" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
+                                    <input type="password" name="api_key" id="api_key_auto" required
+                                        placeholder="sk-..."
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div>
-                    <label for="additional_info" class="block text-sm font-medium text-gray-700">Additional Info (Optional)</label>
-                    <textarea name="additional_info" id="additional_info" rows="3"
-                        placeholder="Add any context or details you'd like included..."
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
-                </div>
+                        <div>
+                            <label for="additional_info" class="block text-sm font-medium text-gray-700">Additional Info (Optional)</label>
+                            <textarea name="additional_info" id="additional_info" rows="3"
+                                placeholder="Add any context or details you'd like included..."
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        </div>
 
-                <div>
-                    <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Generate Offer Summary
-                    </button>
+                        <div>
+                            <button type="submit"
+                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Generate Offer Summary
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
+        {% endblock %}
     </div>
-</div>
 
     <!-- Status Overlay -->
     <div id="statusOverlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">

@@ -2,7 +2,13 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import request, send_file
+from flask import request, send_file, redirect, url_for
+
+from flask_login import current_user
+from src import db
+from src.models import Task
+from src.models import Lead
+import json
 
 
 from src.scrapers.web_scraper import crawl_website
@@ -18,6 +24,16 @@ def leads_from_mail_service():
     selected_prompt = request.form["prompt_language"]
     additional_instructions = request.form["additional_instructions"]
     email_file = request.files.get("email_file")
+
+    new_task = Task(
+        user_id=current_user.id,
+        language=selected_prompt,
+        offer=offer,
+        tone=tone,
+        additional_instructions=additional_instructions,
+        status='RUNNING')
+    db.session.add(new_task)
+    db.session.commit()
 
     if not email_file:
         return "No file uploaded.", 400
@@ -43,6 +59,18 @@ def leads_from_mail_service():
                 )
 
                 if scraped_data and scraped_data.get("pages"):
+                    
+                    combined_text = "\n\n".join(page_data["text"] for page_data in scraped_data["pages"].values())
+                    new_lead = Lead(
+                        task_id=new_task.id,
+                        company_name=lead["name"],
+                        website_url=lead["link"],
+                        contact_email=scraped_data.get("email"),
+                        website_content=combined_text
+                    )
+                    db.session.add(new_lead)
+                    
+                    
                     result_entry = {
                         "name": lead["name"],
                         "pages": scraped_data["pages"],
@@ -52,6 +80,8 @@ def leads_from_mail_service():
                     scrape_results.append(result_entry)
             else:
                 print(f"Skipping {lead['name']} because no website was found.")
+                
+        db.session.commit()
 
         # 5. Generate emails with OpenAI
         client = OpenAI(api_key=api_key)
@@ -63,18 +93,18 @@ def leads_from_mail_service():
             prompt_filename=selected_prompt,
             additional_instructions=additional_instructions,
         )
+        
+        json_output = emails_df.to_dict(orient="records")
+        new_task.output = json_output
+        new_task.status = 'SUCCESS'
+        db.session.commit()
 
-        # 6. Return the JSON file for download
-        json_buffer = io.StringIO()
-        emails_df.to_json(json_buffer, orient="records", force_ascii=False, indent=2)
-        json_buffer.seek(0)
-
-        return send_file(
-            io.BytesIO(json_buffer.getvalue().encode("utf-8")),
-            mimetype="application/json",
-            as_attachment=True,
-            download_name="generated_emails.json",
-        )
+        return redirect(url_for('main.tasks'))
 
     except Exception as e:
+        
+        new_task.status = 'FAILURE'
+        new_task.output = {"error": str(e)}
+        db.session.commit()
+        
         return f"An error occurred: {str(e)}", 500

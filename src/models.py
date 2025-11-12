@@ -39,10 +39,11 @@ class Task(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Task Inputs (Data needed to run the job)
-    language = db.Column(db.String(10), nullable=False)
+    language = db.Column(db.String(50), nullable=False)
     offer = db.Column(db.Text)
     tone = db.Column(db.String(50))
-    query = db.Column(db.String(255)) 
+    query = db.Column(db.String(255))
+    additional_instructions = db.Column(db.Text)
     
     # Status and Output
     status = db.Column(db.String(50), default='PENDING', index=True) # PENDING, RUNNING, SUCCESS, FAILURE
