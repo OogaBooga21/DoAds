@@ -1,357 +1,284 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DoAds Lead Gen</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .tab-content {
-            transition: opacity 0.3s ease-in-out;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800">
+{% extends "base.html" %}
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Title with Logo -->
-                <div class="flex-shrink-0 flex items-center">
-                    <img class="h-8 w-auto" src="https://doads.ro/wp-content/uploads/2019/07/doads-logo.png" alt="DoAds Logo">
-                    <span class="ml-3 text-xl font-bold text-gray-800">Lead Generator</span>
-                </div>
-                <!-- Tabs -->
-                <div class="flex items-center space-x-2 sm:space-x-4">
-                    <button id="scrapeTab" class="tab-btn">Scrape Tool</button>
-                    <button id="mailTab" class="tab-btn">Mail to Lead</button>
-                    <button id="autoOfferTab" class="tab-btn">Auto-Offer</button>
-                    <a href="{{ url_for('main.tasks') }}" class="tab-btn">My Tasks</a>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <div class="container mx-auto px-4 py-8 md:py-12">
-        {% block content %}
-        <!-- Tab Content: Scrape Tool -->
-        <div id="scrapeContent" class="tab-content">
-            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="p-8">
-                    <h1 class="text-2xl font-bold text-gray-900">AI Lead Generation Assistant</h1>
-                    <p class="mt-2 text-gray-600">Find leads from Google Maps, scrape their sites, and generate personalized outreach emails.</p>
-
-                    <form id="scrapeForm" action="/run_from_gmaps" method="post" class="mt-8 space-y-6">
-                        <!-- Search & API Settings -->
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search & API Settings</h2>
-                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="query" class="block text-sm font-medium text-gray-700">Google Maps Query</label>
-                                    <input type="text" name="query" id="query" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York">
-                                </div>
-                                <div>
-                                    <label for="api_key_scrape" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                                    <input type="password" name="api_key" id="api_key_scrape" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
-                                </div>
-                                <div>
-                                    <label for="max_results" class="block text-sm font-medium text-gray-700">Max Results (up to 50)</label>
-                                    <input type="number" name="max_results" id="max_results" value="5" min="1" max="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                <!-- THIS FIELD WAS MISSING -->
-                                <div>
-                                    <label for="gmail_api_key_scrape" class="block text-sm font-medium text-gray-700">Gmail API Key (Optional)</label>
-                                    <input type="password" name="gmail_api_key" id="gmail_api_key_scrape" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter key if used by backend">
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Email Personalization -->
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Email Personalization</h2>
-                            <div class="mt-4 space-y-4">
-                               <div>
-                                    <label for="offer_scrape" class="block text-sm font-medium text-gray-700">Your Offer</label>
-                                    <textarea name="offer" id="offer_scrape" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Describe your service or product clearly."></textarea>
-                                </div>
-                                <div>
-                                    <label for="tone_scrape" class="block text-sm font-medium text-gray-700">Email Tone</label>
-                                    <input type="text" name="tone" id="tone_scrape" required value="Friendly and Personable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                 <div>
-                                    <label for="additional_instructions_scrape" class="block text-sm font-medium text-gray-700">Additional Instructions (Optional)</label>
-                                    <textarea name="additional_instructions" id="additional_instructions_scrape" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Mention our recent award..."></textarea>
-                                </div>
-                                <div>
-                                    <label for="prompt_language_scrape" class="block text-sm font-medium text-gray-700">Prompt Language</label>
-                                     <select name="prompt_language" id="prompt_language_scrape" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        <option value="eng_prompt.txt">English</option>
-                                        <option value="ro_prompt.txt" selected>Romanian</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Submit Button -->
-                        <div>
-                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Generate & Download JSON
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content: Mail to Lead -->
-        <div id="mailContent" class="tab-content hidden">
-             <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="p-8">
-                    <h1 class="text-2xl font-bold text-gray-900">Mail to Lead Tool</h1>
-                    <p class="mt-2 text-gray-600">Paste emails below to find their company websites and generate personalized outreach.</p>
-                    
-                    <form id="mailForm" action="/run_from_mail" method="post" enctype="multipart/form-data" class="mt-8 space-y-6">
-                        
-                        <!-- Input Section -->
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Input & API Key</h2>
-                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="md:col-span-2">
-                                    <label for="emails" class="block text-sm font-medium text-gray-700">Email List (one per line)</label>
-                                    <input type="file" name="email_file" id="email_file" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                <div>
-                                    <label for="api_key_mail" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                                    <input type="password" name="api_key" id="api_key_mail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
-                                </div>
-                                <!-- THIS FIELD WAS MISSING -->
-                                <div>
-                                    <label for="gmail_api_key_mail" class="block text-sm font-medium text-gray-700">Gmail API Key (Optional)</label>
-                                    <input type="password" name="gmail_api_key" id="gmail_api_key_mail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter key if used by backend">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Email Personalization (Shared) -->
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Email Personalization</h2>
-                            <div class="mt-4 space-y-4">
-                               <div>
-                                    <label for="offer_mail" class="block text-sm font-medium text-gray-700">Your Offer</label>
-                                    <textarea name="offer" id="offer_mail" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Describe your service or product clearly."></textarea>
-                                </div>
-                                <div>
-                                    <label for="tone_mail" class="block text-sm font-medium text-gray-700">Email Tone</label>
-                                    <input type="text" name="tone" id="tone_mail" required value="Friendly and approachable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                 <div>
-                                    <label for="additional_instructions_mail" class="block text-sm font-medium text-gray-700">Additional Instructions (Optional)</label>
-                                    <textarea name="additional_instructions" id="additional_instructions_mail" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Mention our recent award..."></textarea>
-                                </div>
-                                <div>
-                                    <label for="prompt_language_mail" class="block text-sm font-medium text-gray-700">Prompt Language</label>
-                                     <select name="prompt_language" id="prompt_language_mail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        <option value="eng_prompt.txt">English</option>
-                                        <option value="ro_prompt.txt" selected>Romanian</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div>
-                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Find Websites & Generate Emails
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div id="autoOfferContent" class="tab-content hidden">
-            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="p-8">
-                    <h1 class="text-2xl font-bold text-gray-900">Auto-Offer Generator</h1>
-                    <p class="mt-2 text-gray-600">Paste a company’s website URL and automatically generate a professional offer summary.</p>
-
-                    <form id="autoOfferForm" action="/auto_offer" method="post" class="mt-8 space-y-6">
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Website & API Key</h2>
-                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="md:col-span-2">
-                                    <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
-                                    <input type="url" name="url" id="url" required
-                                        placeholder="https://example.com"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                                <div>
-                                    <label for="api_key_auto" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                                    <input type="password" name="api_key" id="api_key_auto" required
-                                        placeholder="sk-..."
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label for="additional_info" class="block text-sm font-medium text-gray-700">Additional Info (Optional)</label>
-                            <textarea name="additional_info" id="additional_info" rows="3"
-                                placeholder="Add any context or details you'd like included..."
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
-                        </div>
-
-                        <div>
-                            <button type="submit"
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Generate Offer Summary
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endblock %}
+{% block content %}
+<!-- Tab Navigation -->
+<div class="mb-6 border-b border-gray-200">
+    <div class="flex space-x-4">
+        <button id="scrapeTab" class="tab-btn active-tab">Scrape Tool</button>
+        <button id="mailTab" class="tab-btn inactive-tab">Mail to Lead</button>
+        <button id="autoOfferTab" class="tab-btn inactive-tab">Auto-Offer</button>
     </div>
+</div>
 
-    <!-- Status Overlay -->
-    <div id="statusOverlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 flex flex-col items-center shadow-xl">
-            <!-- Spinner -->
-            <svg class="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <!-- Status Text -->
-            <p id="statusText" class="mt-4 text-gray-700 font-medium">Processing your request...</p>
+<!-- Tab Content: Scrape Tool -->
+<div id="scrapeContent" class="tab-content">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold text-gray-900">AI Lead Generation Assistant</h1>
+            <p class="mt-2 text-gray-600">Find leads from Google Maps, scrape their sites, and generate personalized outreach emails.</p>
+
+            <form id="scrapeForm" action="/run_from_gmaps" method="post" class="mt-8 space-y-6">
+                <!-- Search & API Settings -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search & API Settings</h2>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="query" class="block text-sm font-medium text-gray-700">Google Maps Query</label>
+                            <input type="text" name="query" id="query" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York">
+                        </div>
+                        <div>
+                            <label for="api_key_scrape" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
+                            <input type="password" name="api_key" id="api_key_scrape" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
+                        </div>
+                        <div>
+                            <label for="max_results" class="block text-sm font-medium text-gray-700">Max Results (up to 50)</label>
+                            <input type="number" name="max_results" id="max_results" value="5" min="1" max="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <!-- THIS FIELD WAS MISSING -->
+                        <div>
+                            <label for="gmail_api_key_scrape" class="block text-sm font-medium text-gray-700">Gmail API Key (Optional)</label>
+                            <input type="password" name="gmail_api_key" id="gmail_api_key_scrape" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter key if used by backend">
+                        </div>
+                    </div>
+                </div>
+                <!-- Email Personalization -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Email Personalization</h2>
+                    <div class="mt-4 space-y-4">
+                       <div>
+                            <label for="offer_scrape" class="block text-sm font-medium text-gray-700">Your Offer</label>
+                            <textarea name="offer" id="offer_scrape" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Describe your service or product clearly."></textarea>
+                        </div>
+                        <div>
+                            <label for="tone_scrape" class="block text-sm font-medium text-gray-700">Email Tone</label>
+                            <input type="text" name="tone" id="tone_scrape" required value="Friendly and Personable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                         <div>
+                            <label for="additional_instructions_scrape" class="block text-sm font-medium text-gray-700">Additional Instructions (Optional)</label>
+                            <textarea name="additional_instructions" id="additional_instructions_scrape" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Mention our recent award..."></textarea>
+                        </div>
+                        <div>
+                            <label for="prompt_language_scrape" class="block text-sm font-medium text-gray-700">Prompt Language</label>
+                             <select name="prompt_language" id="prompt_language_scrape" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="eng_prompt.txt">English</option>
+                                <option value="ro_prompt.txt" selected>Romanian</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Generate & Download JSON
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        // --- Tab Switching Logic ---
-        const scrapeTab = document.getElementById('scrapeTab');
-        const mailTab = document.getElementById('mailTab');
-        const scrapeContent = document.getElementById('scrapeContent');
-        const mailContent = document.getElementById('mailContent');
-        const autoOfferTab = document.getElementById('autoOfferTab');
-        const autoOfferContent = document.getElementById('autoOfferContent');
-        const tabs = [scrapeTab, mailTab, autoOfferTab];
+<!-- Tab Content: Mail to Lead -->
+<div id="mailContent" class="tab-content hidden">
+     <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold text-gray-900">Mail to Lead Tool</h1>
+            <p class="mt-2 text-gray-600">Paste emails below to find their company websites and generate personalized outreach.</p>
+            
+            <form id="mailForm" action="/run_from_mail" method="post" enctype="multipart/form-data" class="mt-8 space-y-6">
+                
+                <!-- Input Section -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Input & API Key</h2>
+                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label for="emails" class="block text-sm font-medium text-gray-700">Email List (one per line)</label>
+                            <input type="file" name="email_file" id="email_file" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="api_key_mail" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
+                            <input type="password" name="api_key" id="api_key_mail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
+                        </div>
+                        <!-- THIS FIELD WAS MISSING -->
+                        <div>
+                            <label for="gmail_api_key_mail" class="block text-sm font-medium text-gray-700">Gmail API Key (Optional)</label>
+                            <input type="password" name="gmail_api_key" id="gmail_api_key_mail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Enter key if used by backend">
+                        </div>
+                    </div>
+                </div>
 
-        function switchTabs(activeTab) {
-            tabs.forEach(tab => {
-                const isActive = tab === activeTab;
-                tab.classList.toggle('active-tab', isActive);
-                tab.classList.toggle('inactive-tab', !isActive);
-            });
-            scrapeContent.classList.toggle('hidden', activeTab !== scrapeTab);
-            mailContent.classList.toggle('hidden', activeTab !== mailTab);
-            autoOfferContent.classList.toggle('hidden', activeTab !== autoOfferTab);
-        }
-        scrapeTab.addEventListener('click', () => switchTabs(scrapeTab));
-        mailTab.addEventListener('click', () => switchTabs(mailTab));
-        autoOfferTab.addEventListener('click', () => switchTabs(autoOfferTab));
+                <!-- Email Personalization (Shared) -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Email Personalization</h2>
+                    <div class="mt-4 space-y-4">
+                       <div>
+                            <label for="offer_mail" class="block text-sm font-medium text-gray-700">Your Offer</label>
+                            <textarea name="offer" id="offer_mail" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Describe your service or product clearly."></textarea>
+                        </div>
+                        <div>
+                            <label for="tone_mail" class="block text-sm font-medium text-gray-700">Email Tone</label>
+                            <input type="text" name="tone" id="tone_mail" required value="Friendly and approachable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                         <div>
+                            <label for="additional_instructions_mail" class="block text-sm font-medium text-gray-700">Additional Instructions (Optional)</label>
+                            <textarea name="additional_instructions" id="additional_instructions_mail" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Mention our recent award..."></textarea>
+                        </div>
+                        <div>
+                            <label for="prompt_language_mail" class="block text-sm font-medium text-gray-700">Prompt Language</label>
+                             <select name="prompt_language" id="prompt_language_mail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="eng_prompt.txt">English</option>
+                                <option value="ro_prompt.txt" selected>Romanian</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-        
-        const style = document.createElement('style');
-        style.innerHTML = `
-            .tab-btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; transition: color 0.2s, background-color 0.2s; }
-            .active-tab { color: #4338ca; background-color: #e0e7ff; }
-            .inactive-tab { color: #6b7280; }
-            .inactive-tab:hover { background-color: #f3f4f6; }
-        `;
-        document.head.appendChild(style);
-        switchTabs(scrapeTab); // Initialize default tab
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Find Websites & Generate Emails
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-        // --- Realistic Status & Background Fetch Logic ---
-        const statusOverlay = document.getElementById('statusOverlay');
-        const statusText = document.getElementById('statusText');
-        const scrapeForm = document.getElementById('scrapeForm');
-        const mailForm = document.getElementById('mailForm');
+<div id="autoOfferContent" class="tab-content hidden">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold text-gray-900">Auto-Offer Generator</h1>
+            <p class="mt-2 text-gray-600">Paste a company’s website URL and automatically generate a professional offer summary.</p>
 
-        async function handleFormSubmit(event, form, statusLogic) {
-    event.preventDefault(); 
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
+            <form id="autoOfferForm" action="/auto_offer" method="post" class="mt-8 space-y-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Website & API Key</h2>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
+                            <input type="url" name="url" id="url" required
+                                placeholder="https://example.com"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="api_key_auto" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
+                            <input type="password" name="api_key" id="api_key_auto" required
+                                placeholder="sk-..."
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
 
-    statusLogic(); 
+                <div>
+                    <label for="additional_info" class="block text-sm font-medium text-gray-700">Additional Info (Optional)</label>
+                    <textarea name="additional_info" id="additional_info" rows="3"
+                        placeholder="Add any context or details you'd like included..."
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                </div>
 
-    try {
-        const formData = new FormData(form);
+                <div>
+                    <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Generate Offer Summary
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        const response = await fetch(form.action, {
-            method: form.method,
-            body: formData, // Send the FormData object directly
+{% block scripts %}
+<script>
+    // --- Tab Switching Logic ---
+    const scrapeTab = document.getElementById('scrapeTab');
+    const mailTab = document.getElementById('mailTab');
+    const autoOfferTab = document.getElementById('autoOfferTab');
+    const scrapeContent = document.getElementById('scrapeContent');
+    const mailContent = document.getElementById('mailContent');
+    const autoOfferContent = document.getElementById('autoOfferContent');
+    const tabs = [scrapeTab, mailTab, autoOfferTab];
+
+    function switchTabs(activeTab) {
+        tabs.forEach(tab => {
+            const isActive = tab === activeTab;
+            tab.classList.toggle('active-tab', isActive);
+            tab.classList.toggle('inactive-tab', !isActive);
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            if (errorText.trim().startsWith('<!doctype html>')) {
-                 throw new Error(`Server responded with status ${response.status}. Please check backend logs.`);
-            }
-            throw new Error(errorText);
-        }
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'generated_emails.json';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        
-        statusOverlay.classList.add('hidden');
-
-    } catch (error) {
-        statusText.textContent = `Error: ${error.message}`;
+        scrapeContent.classList.toggle('hidden', activeTab !== scrapeTab);
+        mailContent.classList.toggle('hidden', activeTab !== mailTab);
+        autoOfferContent.classList.toggle('hidden', activeTab !== autoOfferTab);
     }
-}
 
-        function runScrapeStatus() {
-            const maxResults = parseInt(document.getElementById('max_results').value, 10) || 5;
-            const x_seconds = 1 + (maxResults / 5); 
-            const mapsDuration = x_seconds * 1000;
-            const websitesDuration = mapsDuration * 10;
+    scrapeTab.addEventListener('click', () => switchTabs(scrapeTab));
+    mailTab.addEventListener('click', () => switchTabs(mailTab));
+    autoOfferTab.addEventListener('click', () => switchTabs(autoOfferTab));
+    switchTabs(scrapeTab); // Set default
 
-            statusText.textContent = 'Scraping Google Maps for leads...';
-            statusOverlay.classList.remove('hidden');
+    // --- Form Submission & Status Logic ---
+    const statusOverlay = document.getElementById('statusOverlay');
+    const statusText = document.getElementById('statusText');
+    const scrapeForm = document.getElementById('scrapeForm');
+    const mailForm = document.getElementById('mailForm');
+    const autoOfferForm = document.getElementById('autoOfferForm');
 
-            setTimeout(() => {
-                statusText.textContent = 'Scraping websites, this may take a while...';
-            }, mapsDuration);
-
-            setTimeout(() => {
-                statusText.textContent = 'Generating AI emails, this may take a while...';
-            }, mapsDuration + websitesDuration);
+    async function handleFormSubmit(event, form, statusLogic) {
+        event.preventDefault();
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
         }
 
-        function runMailStatus() {
-            statusText.textContent = 'Processing, this may take a while...';
-            statusOverlay.classList.remove('hidden');
-        }
+        statusLogic();
 
-        function runAutoOfferStatus() {
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: form.method,
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `Server error: ${response.status}`);
+            }
+            
+            if (form.action.includes('auto_offer')) {
+                const data = await response.json();
+                displayOfferResult(data);
+                statusOverlay.classList.add('hidden');
+            } else {
+                window.location.href = "{{ url_for('main.tasks') }}";
+            }
+
+        } catch (error) {
+            statusText.textContent = `Error: ${error.message}`;
+            setTimeout(() => {
+                statusOverlay.classList.add('hidden');
+                statusText.textContent = 'Processing your request...'; // Reset text
+            }, 3000);
+        }
+    }
+
+    function runScrapeStatus() {
+        statusText.textContent = 'Starting task... This may take a few minutes.';
+        statusOverlay.classList.remove('hidden');
+    }
+
+    function runMailStatus() {
+        statusText.textContent = 'Starting task... This may take a few minutes.';
+        statusOverlay.classList.remove('hidden');
+    }
+
+    function runAutoOfferStatus() {
         statusText.textContent = 'Scraping website and generating offer...';
         statusOverlay.classList.remove('hidden');
-        }
+    }
 
-
-        scrapeForm.addEventListener('submit', (e) => handleFormSubmit(e, scrapeForm, runScrapeStatus));
-        mailForm.addEventListener('submit', (e) => handleFormSubmit(e, mailForm, runMailStatus));
-        autoOfferForm.addEventListener('submit', (e) => handleFormSubmit(e, autoOfferForm, runAutoOfferStatus));
-
+    scrapeForm.addEventListener('submit', (e) => handleFormSubmit(e, scrapeForm, runScrapeStatus));
+    mailForm.addEventListener('submit', (e) => handleFormSubmit(e, mailForm, runMailStatus));
+    autoOfferForm.addEventListener('submit', (e) => handleFormSubmit(e, autoOfferForm, runAutoOfferStatus));
 
     function displayOfferResult(data) {
-        // Remove old results if any
         const oldResult = document.getElementById('offerResult');
         if (oldResult) oldResult.remove();
 
@@ -363,23 +290,19 @@
             <h3 class="text-lg font-semibold text-gray-800 mb-2">Generated Offer Summary</h3>
             <p class="text-sm text-indigo-600 mb-4">${data.website}</p>
             <pre id="offerText" class="whitespace-pre-wrap text-gray-700 text-sm">${data.summary}</pre>
-            <button id="copyOfferBtn"
-                class="mt-4 text-sm px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            <button id="copyOfferBtn" class="mt-4 text-sm px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
                 Copy Offer
             </button>
         `;
 
-        // Append result to the tab
         autoOfferForm.parentNode.appendChild(resultDiv);
 
-        // Enable "copy to clipboard"
         document.getElementById('copyOfferBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(document.getElementById('offerText').innerText);
+            const btn = document.getElementById('copyOfferBtn');
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy Offer'; }, 2000);
         });
     }
-
-
-    </script>
-</body>
-</html>
-
+</script>
+{% endblock %}

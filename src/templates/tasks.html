@@ -1,4 +1,4 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8 md:py-12">
@@ -38,7 +38,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {% if task.status == 'SUCCESS' and task.output %}
-                        <a href="#" class="text-indigo-600 hover:text-indigo-900" onclick="downloadTaskOutput({{ task.id }})">Download</a>
+                        <a href="{{ url_for('main.download_task_output', task_id=task.id) }}" class="text-indigo-600 hover:text-indigo-900">Download</a>
                         {% else %}
                         <span class="text-gray-400">No Download</span>
                         {% endif %}
@@ -52,33 +52,14 @@
     <p class="text-gray-600">You haven't submitted any tasks yet.</p>
     {% endif %}
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    function downloadTaskOutput(taskId) {
-        fetch(`/download_task_output/${taskId}`)
-            .then(response => {
-                if (!response.ok) {
-                    // If the server returns an error (e.g., 404, 403), parse the error message
-                    return response.json().then(err => { throw new Error(err.error || 'Unknown error'); });
-                }
-                return response.blob();
-            })
-            .then(blob => {
-                // Create a URL for the blob
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `task_${taskId}_output.json`; // Suggest a filename
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url); // Clean up the URL object
-                a.remove(); // Remove the anchor element
-            })
-            .catch(error => {
-                alert('Error downloading file: ' + error.message);
-                console.error('Download error:', error);
-            });
-    }
+    // This script is now primarily for potential future interactivity on this page.
+    // The download is handled by a direct link.
+    document.addEventListener('DOMContentLoaded', (event) => {
+        console.log("Tasks page loaded");
+    });
 </script>
 {% endblock %}
