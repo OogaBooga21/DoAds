@@ -17,16 +17,6 @@
 # COPY . .
 
 
-# Use an official Python image
-FROM python:3.10-slim
-
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy the requirements file and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 # --- Playwright Fix: Install required Linux system dependencies ---
 RUN apt-get update && \
     apt-get install -y \
@@ -35,7 +25,8 @@ RUN apt-get update && \
         libgtk-3-0 \
         libpangocairo-1.0-0 \
         libcairo-gobject2 \
-        libgdk-pixbuf2.0-0 \
+        # FIX: Replaced 'libgdk-pixbuf2.0-0' with the new name 'libgdk-pixbuf-xlib-2.0-0'
+        libgdk-pixbuf-xlib-2.0-0 \ 
         # Standard system dependencies often needed by Playwright browsers:
         libnss3 \
         libatk1.0-0 \
@@ -58,8 +49,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # --- Playwright Fix: Install the browser executables ---
-# This command installs Chromium, Firefox, and WebKit to cover all scenarios.
 RUN playwright install
-
-# Copy all your project files into the container
-COPY . .
