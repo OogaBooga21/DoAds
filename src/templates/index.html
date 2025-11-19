@@ -18,6 +18,7 @@
             <p class="mt-2 text-gray-600">Find leads from Google Maps, scrape their sites, and generate personalized outreach emails.</p>
 
             <form id="scrapeForm" action="/run_from_gmaps" method="post" class="mt-8 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <!-- Search & API Settings -->
                 <div>
                     <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search & API Settings</h2>
@@ -85,6 +86,7 @@
             <p class="mt-2 text-gray-600">Paste emails below to find their company websites and generate personalized outreach.</p>
             
             <form id="mailForm" action="/run_from_mail" method="post" enctype="multipart/form-data" class="mt-8 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 
                 <!-- Input Section -->
                 <div>
@@ -150,6 +152,7 @@
             <p class="mt-2 text-gray-600">Paste a company’s website URL and automatically generate a professional offer summary.</p>
 
             <form id="autoOfferForm" action="/auto_offer" method="post" class="mt-8 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div>
                     <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Website & API Key</h2>
                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">

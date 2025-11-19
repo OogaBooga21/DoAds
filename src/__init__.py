@@ -4,11 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from celery import Celery
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 celery = Celery(__name__)
 migrate = Migrate()
+csrf = CSRFProtect()
 db_uri = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite').replace("postgres://", "postgresql://", 1)
 
 
@@ -37,7 +39,10 @@ def create_app(test_config=None):
         CELERY_RESULT_BACKEND=os.environ.get('POSTGRES_URL_RESULT', db_uri),
         
         # Add a custom variable if you want to use the app's internal key for non-user tasks
-        INTERNAL_OPENAI_KEY=os.environ.get('INTERNAL_OPENAI_KEY')
+        INTERNAL_OPENAI_KEY=os.environ.get('INTERNAL_OPENAI_KEY'),
+
+        # --- CSRF CONFIGURATION ---
+        WTF_CSRF_ENABLED=True
     )
     
     # Existing config loading logic
@@ -49,6 +54,7 @@ def create_app(test_config=None):
     # Initialize Extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
     
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login' # Set the route to redirect to for login

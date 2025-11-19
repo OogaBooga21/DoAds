@@ -87,7 +87,7 @@ def leads_from_gmaps_service():
         )
         
         json_output = emails_df.to_dict(orient="records")
-        new_task.output = json_output
+        new_task.output = {"results": json_output}
         new_task.status = 'SUCCESS'
         db.session.commit()
         

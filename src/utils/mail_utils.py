@@ -50,7 +50,7 @@ def extract_domains_from_emails(emails: List[str]) -> Dict[str, str]:
     free_domains_regex = re.compile(rf".*({free_domains_pattern}).*")
 
     for email in emails:
-        match = re.search(r"@([^@]+)", email)
+        match = re.search(r"@([^/@]+)", email)
         if not match:
             continue
 
