@@ -42,7 +42,8 @@ def create_app(test_config=None):
         INTERNAL_OPENAI_KEY=os.environ.get('INTERNAL_OPENAI_KEY'),
 
         # --- CSRF CONFIGURATION ---
-        WTF_CSRF_ENABLED=True
+        # WTF_CSRF_ENABLED=True
+        WTF_CSRF_ENABLED=False
     )
     
     # Existing config loading logic
