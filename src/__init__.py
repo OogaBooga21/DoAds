@@ -41,8 +41,11 @@ def create_app(test_config=None):
         # Add a custom variable if you want to use the app's internal key for non-user tasks
         INTERNAL_OPENAI_KEY=os.environ.get('INTERNAL_OPENAI_KEY'),
 
+        # --- BREVO CONFIGURATION ---
+        BREVO_API_KEY=os.environ.get('BREVO_API_KEY'),
+
         # --- CSRF CONFIGURATION ---
-        WTF_CSRF_ENABLED=True
+        WTF_CSRF_ENABLED=False
     )
     
     # Existing config loading logic

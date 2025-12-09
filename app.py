@@ -1,5 +1,10 @@
 from src import create_app
 import os
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path='variables.env')
+load_dotenv(dotenv_path='sendgrid.env')
+load_dotenv(dotenv_path='brevo.env')
 
 app = create_app()
 

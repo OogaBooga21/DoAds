@@ -33,4 +33,5 @@ __pycache__/
 *.bat
 *.spec
 
-instance/
+instance/sendgrid.env
+*.env

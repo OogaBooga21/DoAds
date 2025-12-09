@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 
 import pandas as pd
 from openai import OpenAI
@@ -130,7 +131,7 @@ def generate_emails(
             # Split email into subject and body
             if "\n\n" in email_part:
                 subject, body = email_part.split("\n\n", 1)
-                subject = subject.replace("Subject: ", "").strip()
+                subject = re.sub(r"^\s*(\*\*|)?(subject|subiect):\s*(\*\*|)?\s*", "", subject, flags=re.IGNORECASE).strip()
             else:
                 subject = f"Collaboration Opportunity with {company_name}"
                 body = email_part
