@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path='variables.env')
 load_dotenv(dotenv_path='sendgrid.env')
 load_dotenv(dotenv_path='brevo.env')
+load_dotenv(dotenv_path='openai.env')
 
 app = create_app()
 

@@ -29,10 +29,6 @@
                             <input type="text" name="query" id="query" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York">
                         </div>
                         <div>
-                            <label for="api_key_scrape" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                            <input type="password" name="api_key" id="api_key_scrape" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
-                        </div>
-                        <div>
                             <label for="max_results" class="block text-sm font-medium text-gray-700">Max Results (up to 50)</label>
                             <input type="number" name="max_results" id="max_results" value="5" min="1" max="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
@@ -97,10 +93,6 @@
                             <label for="emails" class="block text-sm font-medium text-gray-700">Email List (one per line)</label>
                             <input type="file" name="email_file" id="email_file" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
-                        <div>
-                            <label for="api_key_mail" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                            <input type="password" name="api_key" id="api_key_mail" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
-                        </div>
                         <!-- THIS FIELD WAS MISSING -->
                         <div>
                             <label for="gmail_api_key_mail" class="block text-sm font-medium text-gray-700">Gmail API Key (Optional)</label>
@@ -161,12 +153,6 @@
                             <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
                             <input type="url" name="url" id="url" required
                                 placeholder="https://example.com"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        </div>
-                        <div>
-                            <label for="api_key_auto" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                            <input type="password" name="api_key" id="api_key_auto" required
-                                placeholder="sk-..."
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                     </div>
@@ -238,10 +224,6 @@
                                 <option value="eng_prompt.txt">English</option>
                                 <option value="ro_prompt.txt" selected>Romanian</option>
                             </select>
-                        </div>
-                        <div>
-                            <label for="api_key_manual" class="block text-sm font-medium text-gray-700">OpenAI API Key</label>
-                            <input type="password" name="api_key" id="api_key_manual" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="sk-...">
                         </div>
                     </div>
                 </div>

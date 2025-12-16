@@ -2,8 +2,7 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import request, send_file, redirect, url_for
-
+from flask import request, send_file, redirect, url_for, current_app
 from flask_login import current_user
 from src import db
 from src.models import Task
@@ -18,7 +17,7 @@ from src.utils.prompt_utils import generate_emails
 
 def leads_from_mail_service():
     # 1. Get user input and uploaded file
-    api_key = request.form["api_key"]
+    api_key = current_app.config['OPENAI_API_KEY']
     tone = request.form["tone"]
     offer = request.form["offer"]
     selected_prompt = request.form["prompt_language"]

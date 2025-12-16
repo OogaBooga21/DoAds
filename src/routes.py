@@ -142,9 +142,10 @@ def send_generated_email(task_id, result_index):
     data = request.get_json()
     subject = data.get('subject')
     body = data.get('body')
+    recipient_email = data.get('email')
 
-    if not all([subject, body]):
-        return jsonify({"success": False, "message": "Missing subject or body."}), 400
+    if not all([subject, body, recipient_email]):
+        return jsonify({"success": False, "message": "Missing subject, body, or email."}), 400
 
     try:
         # Create and save the email object
@@ -152,14 +153,14 @@ def send_generated_email(task_id, result_index):
             lead_id=lead.id,
             subject_line=subject,
             content=body,
-            recipient_email=lead.contact_email,
+            recipient_email=recipient_email,
             status='GENERATED'
         )
         db.session.add(new_email)
         db.session.commit()
 
         html_body = body.replace('\n', '<br>')
-        send_email(lead.contact_email, subject, html_body)
+        send_email(recipient_email, subject, html_body)
 
         new_email.status = 'SENT'
         db.session.commit()

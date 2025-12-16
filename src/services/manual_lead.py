@@ -1,4 +1,4 @@
-from flask import request, redirect, url_for
+from flask import request, redirect, url_for, current_app
 from flask_login import current_user
 from openai import OpenAI
 from src import db
@@ -15,7 +15,7 @@ def manual_lead_service():
     tone = request.form["tone"]
     additional_instructions = request.form["additional_instructions"]
     selected_prompt = request.form["prompt_language"]
-    api_key = request.form["api_key"]
+    api_key = current_app.config['OPENAI_API_KEY']
 
     new_task = Task(
         user_id=current_user.id,

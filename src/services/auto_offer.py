@@ -1,13 +1,13 @@
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import request
+from flask import request, current_app
 
 from src.scrapers.web_scraper import crawl_website
 
 
 def auto_offer_service():
-    api_key = request.form["api_key"]
+    api_key = current_app.config['OPENAI_API_KEY']
     url = request.form["url"]
     additional_info = request.form.get("additional_info", "")
 

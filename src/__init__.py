@@ -39,7 +39,7 @@ def create_app(test_config=None):
         CELERY_RESULT_BACKEND=os.environ.get('POSTGRES_URL_RESULT', db_uri),
         
         # Add a custom variable if you want to use the app's internal key for non-user tasks
-        INTERNAL_OPENAI_KEY=os.environ.get('INTERNAL_OPENAI_KEY'),
+        OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY'),
 
         # --- BREVO CONFIGURATION ---
         BREVO_API_KEY=os.environ.get('BREVO_API_KEY'),

@@ -2,8 +2,7 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import Blueprint, render_template, request, send_file, redirect, url_for
-
+from flask import Blueprint, render_template, request, send_file, redirect, url_for, current_app
 from flask_login import current_user
 from src import db
 from src.models import Task
@@ -16,7 +15,7 @@ from src.utils.prompt_utils import generate_emails
 
 def leads_from_gmaps_service():
     query = request.form["query"]
-    api_key = request.form["api_key"]
+    api_key = current_app.config['OPENAI_API_KEY']
     tone = request.form["tone"]
     offer = request.form["offer"]
     gmail_api_key = request.form.get("gmail_api_key")  #.get for optional field
