@@ -35,3 +35,4 @@ __pycache__/
 
 instance/sendgrid.env
 *.env
+instance/db.sqlite

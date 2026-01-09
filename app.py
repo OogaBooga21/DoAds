@@ -1,6 +1,7 @@
 from src import create_app
 import os
 from dotenv import load_dotenv
+import click
 
 load_dotenv(dotenv_path='variables.env')
 load_dotenv(dotenv_path='sendgrid.env')
@@ -8,6 +9,16 @@ load_dotenv(dotenv_path='brevo.env')
 load_dotenv(dotenv_path='openai.env')
 
 app = create_app()
+
+@app.cli.command("setup-webhooks")
+@click.argument("base_url")
+def setup_webhooks_command(base_url):
+    """Sets up the Brevo webhooks."""
+    from src.utils.brevo_utils import setup_brevo_webhooks
+    webhook_url = f"{base_url}/brevo-webhook"
+    with app.app_context():
+        setup_brevo_webhooks(webhook_url)
+    print("Webhooks setup process completed.")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

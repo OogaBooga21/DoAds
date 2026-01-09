@@ -90,6 +90,9 @@ class Email(db.Model):
     subject_line = db.Column(db.String(255), nullable=False)
     content = db.Column(db.Text, nullable=False)
     recipient_email = db.Column(db.String(120), nullable=False)
+    sender_email = db.Column(db.String(120), nullable=False)
+    direction = db.Column(db.String(20), nullable=False, default='OUTBOUND') # OUTBOUND vs INBOUND
+    brevo_message_id = db.Column(db.String(255), nullable=True, index=True)
     
     # Status
     status = db.Column(db.String(50), default='GENERATED', index=True) # GENERATED, SENT, FAILED, OPENED, REPLIED

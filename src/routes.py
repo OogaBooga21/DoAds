@@ -5,6 +5,8 @@ from .models import Task, Lead, Email
 from . import db
 import io
 import json
+from datetime import datetime
+from sqlalchemy import or_
 
 main_bp = Blueprint('main', __name__)
 
@@ -12,7 +14,24 @@ from .services.leads_from_gmaps import leads_from_gmaps_service
 from .services.leads_from_mail import leads_from_mail_service
 from .services.auto_offer import auto_offer_service
 from .services.manual_lead import manual_lead_service
-from .utils.mailing_service import send_email
+from .utils.mailing_service import send_email, process_inbound_email, process_transactional_event
+
+
+@main_bp.route('/brevo-webhook', methods=['POST'])
+def brevo_webhook():
+    """
+    Endpoint to receive webhooks from Brevo for email events and replies.
+    """
+    data = request.get_json()
+
+    # Differentiate between inbound replies and transactional events
+    if 'items' in data and data.get('items'): # Inbound Reply Webhook
+        for item in data['items']:
+            process_inbound_email(item)
+    elif 'event' in data: # Transactional Event Webhook
+        process_transactional_event(data)
+        
+    return jsonify({"success": True}), 200
 
 
 @main_bp.route('/')
@@ -45,8 +64,10 @@ def emails():
 @login_required
 def related_emails(email):
     related_emails = db.session.execute(
-        db.select(Email).join(Lead).join(Task).filter(Task.user_id == current_user.id, Email.recipient_email == email).order_by(
-            Email.sent_at.desc())
+        db.select(Email).join(Lead).join(Task).filter(
+            Task.user_id == current_user.id,
+            or_(Email.recipient_email == email, Email.sender_email == email)
+        ).order_by(Email.sent_at.asc())
     ).scalars().all()
     return render_template('related_emails.html', emails=related_emails, recipient=email)
 
@@ -62,7 +83,7 @@ def download_task_output(task_id):
         abort(403)  # Forbidden
 
     if not task.output:
-        return jsonify({"error": "No output available for this task."}), 404
+        return jsonify({"error": "No output available for this task."} ), 404
 
     # Assuming task.output is already a JSON object/dict
     # Convert it to a JSON string for the file
@@ -113,7 +134,7 @@ def auto_mail(task_id):
 
     leads = task.leads.all()
     if not leads:
-        return jsonify({"success": False, "message": "No leads found for this task."})
+        return jsonify({"success": False, "message": "No leads found for this task."} )
 
     email_subject = "A new opportunity for your business"
     email_body = "Hello, we are a digital marketing agency and we would like to offer you our services."
@@ -123,9 +144,9 @@ def auto_mail(task_id):
             try:
                 send_email(lead.contact_email, email_subject, email_body)
             except Exception as e:
-                return jsonify({"success": False, "message": f"Failed to send email: {e}"})
+                return jsonify({"success": False, "message": f"Failed to send email: {e}"} )
 
-    return jsonify({"success": True, "message": f"Auto-mailing for task {task_id} completed."})
+    return jsonify({"success": True, "message": f"Auto-mailing for task {task_id} completed."} )
 
 
 @main_bp.route('/send_generated_email/<int:task_id>/<int:result_index>', methods=['POST'])
@@ -137,7 +158,7 @@ def send_generated_email(task_id, result_index):
 
     lead = task.leads.first()
     if not lead:
-        return jsonify({"success": False, "message": "No lead found for this task."}), 404
+        return jsonify({"success": False, "message": "No lead found for this task."} ), 404
 
     data = request.get_json()
     subject = data.get('subject')
@@ -145,7 +166,7 @@ def send_generated_email(task_id, result_index):
     recipient_email = data.get('email')
 
     if not all([subject, body, recipient_email]):
-        return jsonify({"success": False, "message": "Missing subject, body, or email."}), 400
+        return jsonify({"success": False, "message": "Missing subject, body, or email."} ), 400
 
     try:
         # Create and save the email object
@@ -154,25 +175,26 @@ def send_generated_email(task_id, result_index):
             subject_line=subject,
             content=body,
             recipient_email=recipient_email,
+            sender_email=current_user.email,
             status='GENERATED'
         )
         db.session.add(new_email)
         db.session.commit()
 
         html_body = body.replace('\n', '<br>')
-        send_email(recipient_email, subject, html_body)
+        message_id = send_email(recipient_email, subject, html_body)
 
         new_email.status = 'SENT'
+        new_email.sent_at = datetime.utcnow()
+        new_email.brevo_message_id = message_id
         db.session.commit()
 
-        return jsonify({"success": True, "message": f"Email sent successfully."})
+        return jsonify({"success": True, "message": "Email sent successfully."} )
     except Exception as e:
         # It's good practice to log the exception
         print(f"Failed to send email: {e}")
         db.session.rollback()
-        return jsonify({"success": False, "message": "Failed to send email."}), 500
-
-
+        return jsonify({"success": False, "message": "Failed to send email."} ), 500
 
 
 

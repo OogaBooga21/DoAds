@@ -9,6 +9,7 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -18,14 +19,30 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for email in emails %}
-                <tr>
+                {% if email.direction == 'OUTBOUND' %}
+                <tr class="email-row" data-email-id="{{ email.id }}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {% if email.follow_ups.all() %}
+                        <button onclick="toggleReplies({{ email.id }})" class="focus:outline-none">
+                            <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ email.recipient_email }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ email.subject_line }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            {% if email.status == 'SENT' %} bg-green-100 text-green-800
+                            {% if email.status == 'SENT' %} bg-blue-100 text-blue-800
+                            {% elif email.status == 'DELIVERED' %} bg-green-100 text-green-800
+                            {% elif email.status == 'OPENED' %} bg-yellow-100 text-yellow-800
+                            {% elif email.status == 'CLICKED' %} bg-indigo-100 text-indigo-800
+                            {% elif email.status == 'REPLIED' %} bg-purple-100 text-purple-800
                             {% elif email.status == 'FAILED' %} bg-red-100 text-red-800
-                            {% else %} bg-yellow-100 text-yellow-800 {% endif %}">
+                            {% elif email.status == 'SPAM' %} bg-pink-100 text-pink-800
+                            {% elif email.status == 'UNSUBSCRIBED' %} bg-gray-100 text-gray-800
+                            {% else %} bg-gray-100 text-gray-800 {% endif %}">
                             {{ email.status }}
                         </span>
                     </td>
@@ -34,6 +51,20 @@
                         <a href="{{ url_for('main.related_emails', email=email.recipient_email) }}" class="text-indigo-600 hover:text-indigo-900">Show Related</a>
                     </td>
                 </tr>
+                <tr class="replies-row hidden" data-replies-for="{{ email.id }}">
+                    <td colspan="6" class="p-0">
+                        <div class="p-4 space-y-4 bg-gray-50">
+                        {% for reply in email.follow_ups %}
+                            <div class="ml-8 border-l-2 border-gray-200 pl-4">
+                                {% with email=reply %}
+                                    {% include 'email_card.html' %}
+                                {% endwith %}
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
@@ -42,4 +73,20 @@
     <p class="text-gray-600">No emails have been sent yet.</p>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function toggleReplies(emailId) {
+        const repliesRow = document.querySelector(`.replies-row[data-replies-for='${emailId}']`);
+        const emailRow = document.querySelector(`.email-row[data-email-id='${emailId}']`);
+        const icon = emailRow.querySelector('svg');
+
+        if (repliesRow) {
+            repliesRow.classList.toggle('hidden');
+            icon.classList.toggle('rotate-90');
+        }
+    }
+</script>
 {% endblock %}
