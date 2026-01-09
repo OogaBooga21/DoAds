@@ -75,7 +75,7 @@ def setup_brevo_webhooks(webhook_url):
             "url": webhook_url,
             "description": f"Inbound replies for {webhook_url}",
             "events": ["inboundEmailProcessed"],
-            "domain": "replies.doads.ro",
+            "domain": os.environ.get('BREVO_INBOUND_DOMAIN'),
             "type": "inbound"
         }
         try:
