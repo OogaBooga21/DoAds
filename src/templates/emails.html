@@ -4,7 +4,7 @@
 <div class="container mx-auto px-4 py-8 md:py-12">
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Sent Emails</h1>
 
-    {% if emails %}
+    {% if pagination.items %}
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -18,7 +18,7 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                {% for email in emails %}
+                {% for email in pagination.items %}
                 {% if email.direction == 'OUTBOUND' %}
                 <tr class="email-row" data-email-id="{{ email.id }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -68,6 +68,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% include '_pagination.html' %}
     </div>
     {% else %}
     <p class="text-gray-600">No emails have been sent yet.</p>

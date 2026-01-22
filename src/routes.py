@@ -43,21 +43,27 @@ def index():
 @main_bp.route('/tasks')
 @login_required
 def tasks():
-    user_tasks = db.session.execute(
+    page = request.args.get('page', 1, type=int)
+    pagination = db.paginate(
         db.select(Task).filter_by(user_id=current_user.id).order_by(
-            Task.created_at.desc())
-    ).scalars().all()
-    return render_template('tasks.html', tasks=user_tasks)
+            Task.created_at.desc()),
+        page=page, 
+        per_page=30
+    )
+    return render_template('tasks.html', pagination=pagination)
 
 
 @main_bp.route('/emails')
 @login_required
 def emails():
-    user_emails = db.session.execute(
+    page = request.args.get('page', 1, type=int)
+    pagination = db.paginate(
         db.select(Email).join(Lead).join(Task).filter(Task.user_id == current_user.id).order_by(
-            Email.sent_at.desc())
-    ).scalars().all()
-    return render_template('emails.html', emails=user_emails)
+            Email.sent_at.desc()),
+        page=page,
+        per_page=30
+    )
+    return render_template('emails.html', pagination=pagination)
 
 
 @main_bp.route('/related_emails/<email>')
