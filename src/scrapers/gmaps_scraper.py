@@ -72,23 +72,34 @@ def get_leads_from_Maps(
     query, output_csv="leads.csv", max_results=50, search_for=1
 ):  # 0 both, 1 only with websites, 2 only without websites
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])  # Set to True to hide browser
+        browser = p.chromium.launch(headless=False, args=["--no-sandbox"])  # Set to False to show browser
         context = browser.new_context(locale="en-US")
         page = context.new_page()
 
         print("[INFO] Navigating to Google Maps...")
-        page.goto("https://www.google.com/maps?hl=en", timeout=60000)  # 1 min
+        page.goto("https://www.google.com/maps?hl=en", timeout=120000)  # 2 min
 
-        # Optional: Accept consent if shown
-        try:
-            page.click('button:has-text("Accept")', timeout=10000)  # 10 sec
-            print("[INFO] Accepted cookies.")
-        except:
-            print("[INFO] No cookie popup found.")
+        # More robustly accept consent
+        consent_accepted = False
+        for button_text in ["Accept all", "Accept", "I agree"]:
+            try:
+                page.get_by_role("button", name=button_text, exact=True).click(timeout=5000)
+                print(f"[INFO] Accepted cookies with text: '{button_text}'")
+                consent_accepted = True
+                break
+            except Exception:
+                continue
+        
+        if not consent_accepted:
+            print("[INFO] No standard cookie popup found or handled.")
+
+        # Take a screenshot for debugging
+        page.screenshot(path="debug_screenshot.png")
+        print("[INFO] Took a screenshot for debugging: debug_screenshot.png")
 
         # Wait for search box and input query
-        search_box = page.locator("input#searchboxinput")
-        search_box.wait_for(timeout=10000)  # 10 sec
+        search_box = page.locator('input[name="q"][role="combobox"]')
+        search_box.wait_for(timeout=30000)  # 30 sec
         search_box.fill(query)
         search_box.press("Enter")
 

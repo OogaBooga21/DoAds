@@ -86,3 +86,36 @@ def setup_brevo_webhooks(webhook_url):
             print(f"Error creating inbound webhook: {e}")
     else:
         print("Inbound webhook already exists.")
+
+
+def list_brevo_webhooks():
+    """
+    Fetches and lists all webhooks configured in the Brevo account.
+    """
+    print("Fetching all webhooks from Brevo...")
+    try:
+        headers = get_brevo_headers()
+        response = requests.get(f"{BREVO_API_URL}/webhooks", headers=headers)
+
+        if response.status_code == 200:
+            webhooks = response.json().get('webhooks', [])
+            if not webhooks:
+                print("No webhooks are configured for this account.")
+                return
+
+            print(f"\nFound {len(webhooks)} webhook(s):")
+            for wh in webhooks:
+                print("-" * 20)
+                print(f"  ID:    {wh.get('id')}")
+                print(f"  URL:   {wh.get('url')}")
+                print(f"  Type:  {wh.get('type')}")
+                print(f"  Events: {', '.join(wh.get('events', []))}")
+            print("-" * 20)
+
+        elif response.status_code == 400 and response.json().get('code') == 'document_not_found':
+            print("No webhooks are configured for this account.")
+        else:
+            print(f"Error fetching webhooks. Status: {response.status_code}, Response: {response.text}")
+
+    except (requests.RequestException, ValueError) as e:
+        print(f"An error occurred: {e}")

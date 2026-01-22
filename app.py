@@ -20,6 +20,15 @@ def setup_webhooks_command(base_url):
         setup_brevo_webhooks(webhook_url)
     print("Webhooks setup process completed.")
 
+
+@app.cli.command("list-webhooks")
+def list_webhooks_command():
+    """Lists all configured Brevo webhooks."""
+    from src.utils.brevo_utils import list_brevo_webhooks
+    with app.app_context():
+        list_brevo_webhooks()
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
