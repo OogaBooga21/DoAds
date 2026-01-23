@@ -93,9 +93,7 @@ def get_leads_from_Maps(
         if not consent_accepted:
             print("[INFO] No standard cookie popup found or handled.")
 
-        # Take a screenshot for debugging
-        page.screenshot(path="debug_screenshot.png")
-        print("[INFO] Took a screenshot for debugging: debug_screenshot.png")
+
 
         # Wait for search box and input query
         search_box = page.locator('input[name="q"][role="combobox"]')
