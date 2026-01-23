@@ -19,9 +19,6 @@ from .utils.mailing_service import send_email, process_inbound_email, process_tr
 
 @main_bp.route('/brevo-webhook', methods=['POST'])
 def brevo_webhook():
-    """
-    Endpoint to receive webhooks from Brevo for email events and replies.
-    """
     data = request.get_json()
 
     # Differentiate between inbound replies and transactional events
