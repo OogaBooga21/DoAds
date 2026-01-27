@@ -114,7 +114,7 @@ def get_leads_from_Maps(
         # Scroll the results panel to load more businesses
         scrollable_div = page.locator('div[role="feed"]')
         for i in range(
-            8
+            10
         ):  ##############################################################################################
             scrollable_div.evaluate("el => el.scrollBy(0, el.scrollHeight)")
             print(f"[INFO] Scrolling... ({i+1}/8)")

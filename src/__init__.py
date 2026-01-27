@@ -2,13 +2,11 @@ from flask import Flask
 import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from celery import Celery
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-celery = Celery(__name__)
 migrate = Migrate()
 csrf = CSRFProtect()
 db_uri = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite').replace("postgres://", "postgresql://", 1)
@@ -33,10 +31,6 @@ def create_app(test_config=None):
         # --- DATABASE CONFIGURATION ---
         SQLALCHEMY_DATABASE_URI=db_uri,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-
-        # --- CELERY CONFIGURATION (Task Queue) ---
-        CELERY_BROKER_URL=os.environ.get('REDIS_URL'), 
-        CELERY_RESULT_BACKEND=os.environ.get('POSTGRES_URL_RESULT', db_uri),
         
         # Add a custom variable if you want to use the app's internal key for non-user tasks
         OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY'),
@@ -62,9 +56,6 @@ def create_app(test_config=None):
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login' # Set the route to redirect to for login
     login_manager.login_message = "Please log in to access this page."
-    
-    # Initialize Celery
-    celery.conf.update(app.config)
     
     # Import Blueprints
     from .routes import main_bp

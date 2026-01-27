@@ -24,8 +24,8 @@ def leads_from_gmaps_service(task_id, user_id, api_key, form_data):
         additional_instructions = form_data["additional_instructions"]
         max_results = int(form_data.get("max_results", 5))
 
-        if max_results > 50:
-            max_results = 50
+        if max_results > 100:
+            max_results = 100
 
         send_status_update(task_id, f"Starting Google Maps search for: {query}")
         leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)

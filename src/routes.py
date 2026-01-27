@@ -137,55 +137,73 @@ def download_task_output(task_id):
 @login_required
 def run_from_gmaps():
     form = request.form
-    new_task = Task(
-        user_id=current_user.id, 
-        status='RUNNING', 
-        query=form["query"],
-        language=form["prompt_language"],
-        offer=form.get("offer"),
-        tone=form.get("tone"),
-        additional_instructions=form.get("additional_instructions")
-    )
-    db.session.add(new_task)
-    db.session.commit()
+    queries = form["query"].strip().splitlines()
+    task_ids = []
 
-    task_args = {
-        "task_id": new_task.id,
-        "user_id": current_user.id,
-        "api_key": current_app.config['OPENAI_API_KEY'],
-        "form_data": form.to_dict()
-    }
-    
-    run_in_background(leads_from_gmaps_service, **task_args)
-    return jsonify({"task_id": new_task.id})
+    for query in queries:
+        if not query:
+            continue
+
+        new_task = Task(
+            user_id=current_user.id, 
+            status='RUNNING', 
+            query=query,
+            language=form["prompt_language"],
+            offer=form.get("offer"),
+            tone=form.get("tone"),
+            additional_instructions=form.get("additional_instructions")
+        )
+        db.session.add(new_task)
+        db.session.commit()
+
+        task_args = {
+            "task_id": new_task.id,
+            "user_id": current_user.id,
+            "api_key": current_app.config['OPENAI_API_KEY'],
+            "form_data": {**form.to_dict(), "query": query} # Pass the single query
+        }
+        
+        run_in_background(leads_from_gmaps_service, **task_args)
+        task_ids.append(new_task.id)
+
+    return jsonify({"task_ids": task_ids})
 
 
 @main_bp.route('/run_from_mail', methods=['POST'])
 @login_required
 def run_from_mail():
     form = request.form
-    new_task = Task(
-        user_id=current_user.id, 
-        status='RUNNING', 
-        query="Mail to Lead",
-        language=form["prompt_language"],
-        offer=form.get("offer"),
-        tone=form.get("tone"),
-        additional_instructions=form.get("additional_instructions")
-    )
-    db.session.add(new_task)
-    db.session.commit()
+    files = request.files.getlist('email_files')
+    task_ids = []
 
-    task_args = {
-        "task_id": new_task.id,
-        "user_id": current_user.id,
-        "api_key": current_app.config['OPENAI_API_KEY'],
-        "form_data": form.to_dict(),
-        "email_file": request.files.get('email_file').read().decode('utf-8') if 'email_file' in request.files else None
-    }
-    
-    run_in_background(leads_from_mail_service, **task_args)
-    return jsonify({"task_id": new_task.id})
+    for file in files:
+        if not file:
+            continue
+
+        new_task = Task(
+            user_id=current_user.id, 
+            status='RUNNING', 
+            query="Mail to Lead",
+            language=form["prompt_language"],
+            offer=form.get("offer"),
+            tone=form.get("tone"),
+            additional_instructions=form.get("additional_instructions")
+        )
+        db.session.add(new_task)
+        db.session.commit()
+
+        task_args = {
+            "task_id": new_task.id,
+            "user_id": current_user.id,
+            "api_key": current_app.config['OPENAI_API_KEY'],
+            "form_data": form.to_dict(),
+            "email_file": file.read().decode('utf-8')
+        }
+        
+        run_in_background(leads_from_mail_service, **task_args)
+        task_ids.append(new_task.id)
+
+    return jsonify({"task_ids": task_ids})
 
 
 @main_bp.route('/auto_offer', methods=['POST'])

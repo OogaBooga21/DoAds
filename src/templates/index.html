@@ -25,12 +25,13 @@
                     <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search & API Settings</h2>
                     <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="query" class="block text-sm font-medium text-gray-700">Google Maps Query</label>
-                            <input type="text" name="query" id="query" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York">
+                            <label for="query" class="block text-sm font-medium text-gray-700">Google Maps Queries (one per line)</label>
+                            <textarea name="query" id="query" required rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Marketing agencies in New York
+Marketing agencies in Los Angeles"></textarea>
                         </div>
                         <div>
                             <label for="max_results" class="block text-sm font-medium text-gray-700">Max Results (up to 50)</label>
-                            <input type="number" name="max_results" id="max_results" value="5" min="1" max="50" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <input type="number" name="max_results" id="max_results" value="5" min="1" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                         <!-- THIS FIELD WAS MISSING -->
 
@@ -87,8 +88,8 @@
                     <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Input & API Key</h2>
                      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2">
-                            <label for="emails" class="block text-sm font-medium text-gray-700">Email List (one per line)</label>
-                            <input type="file" name="email_file" id="email_file" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <label for="emails" class="block text-sm font-medium text-gray-700">Email Lists</label>
+                            <input type="file" name="email_files" id="email_files" required multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                         </div>
                         <!-- THIS FIELD WAS MISSING -->
 
@@ -298,33 +299,40 @@
             }
             
             const data = await response.json();
-            const taskId = data.task_id;
+            const taskIds = data.task_ids || [data.task_id];
 
-            if (!taskId) {
-                throw new Error("Did not receive a task ID from the server.");
+            if (!taskIds || taskIds.length === 0) {
+                throw new Error("Did not receive any task IDs from the server.");
             }
 
-            eventSource = new EventSource(`/task_status/${taskId}`);
+            statusText.textContent = `Created ${taskIds.length} tasks. Processing...`;
 
-            eventSource.onmessage = function(event) {
-                const eventData = JSON.parse(event.data);
-                if (eventData.message === 'CLOSE') {
+            taskIds.forEach(taskId => {
+                const eventSource = new EventSource(`/task_status/${taskId}`);
+
+                eventSource.onmessage = function(event) {
+                    const eventData = JSON.parse(event.data);
+                    if (eventData.message === 'CLOSE') {
+                        eventSource.close();
+                        // Update status for this specific task
+                        statusText.textContent = `Task ${taskId} finished.`;
+                    } else {
+                        // Update status with task-specific message
+                        statusText.textContent = `Task ${taskId}: ${eventData.message}`;
+                    }
+                };
+
+                eventSource.onerror = function(err) {
+                    console.error(`EventSource for task ${taskId} failed:`, err);
                     eventSource.close();
-                    statusText.textContent = 'Task finished. Redirecting...';
-                    window.location.href = "{{ url_for('main.tasks') }}";
-                } else {
-                    statusText.textContent = eventData.message;
-                }
-            };
+                    statusText.textContent = `Error with task ${taskId}. Check console.`;
+                };
+            });
 
-            eventSource.onerror = function(err) {
-                console.error("EventSource failed:", err);
-                eventSource.close();
-                statusText.textContent = 'Error receiving status updates. Please check the console.';
-                 setTimeout(() => {
-                    statusOverlay.classList.add('hidden');
-                }, 3000);
-            };
+            setTimeout(() => {
+                statusOverlay.classList.add('hidden');
+                window.location.href = "{{ url_for('main.tasks') }}";
+            }, 3000); // Redirect after 3 seconds
 
         } catch (error) {
             statusText.textContent = `Error: ${error.message}`;

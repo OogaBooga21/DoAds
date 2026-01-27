@@ -126,11 +126,16 @@
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h3 class="text-xl leading-6 font-medium text-gray-900">Manual Mail for Task #{{ task.id }}</h3>
-                    {% set sent_emails = [] %}
-                    {% for lead in task.leads %}
+                    {% set sent_emails = {} %}
+                    {% for lead in task.user.tasks.all() %}
                         {% for email in lead.emails %}
                             {% if email.status == 'SENT' or email.status == 'DELIVERED' or email.status == 'OPENED' or email.status == 'CLICKED' or email.status == 'REPLIED' %}
-                                {% set _ = sent_emails.append(email.recipient_email) %}
+                                {% set recipient = email.recipient_email %}
+                                {% if recipient in sent_emails %}
+                                    {% set _ = sent_emails.update({recipient: sent_emails[recipient] + 1}) %}
+                                {% else %}
+                                    {% set _ = sent_emails.update({recipient: 1}) %}
+                                {% endif %}
                             {% endif %}
                         {% endfor %}
                     {% endfor %}
@@ -144,6 +149,7 @@
                         {% if task.output and task.output.results %}
                             {% for result in task.output.results %}
                             {% set is_sent = result.contact_email in sent_emails %}
+                            {% set sent_count = sent_emails.get(result.contact_email, 0) %}
                             <div class="p-4 border rounded-lg {% if is_sent %}bg-gray-200{% else %}bg-gray-50{% endif %}">
                                 <div class="flex items-start">
                                     <div class="flex items-center h-5">
@@ -154,7 +160,7 @@
                                             <p><strong>Company:</strong> {{ result.company_name }}</p>
                                             {% if is_sent %}
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                Sent
+                                                Sent ({{ sent_count }})
                                             </span>
                                             {% endif %}
                                         </div>
