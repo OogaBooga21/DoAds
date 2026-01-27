@@ -272,14 +272,18 @@
     const autoOfferForm = document.getElementById('autoOfferForm');
     const manualLeadForm = document.getElementById('manualLeadForm');
 
-    async function handleFormSubmit(event, form, statusLogic) {
+    async function handleFormSubmit(event) {
         event.preventDefault();
+        const form = event.target;
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
 
-        statusLogic();
+        statusText.textContent = 'Initializing task...';
+        statusOverlay.classList.remove('hidden');
+
+        let eventSource;
 
         try {
             const formData = new FormData(form);
@@ -293,73 +297,49 @@
                 throw new Error(errorText || `Server error: ${response.status}`);
             }
             
-            if (form.action.includes('auto_offer')) {
-                const data = await response.json();
-                displayOfferResult(data);
-                statusOverlay.classList.add('hidden');
-            } else {
-                window.location.href = "{{ url_for('main.tasks') }}";
+            const data = await response.json();
+            const taskId = data.task_id;
+
+            if (!taskId) {
+                throw new Error("Did not receive a task ID from the server.");
             }
+
+            eventSource = new EventSource(`/task_status/${taskId}`);
+
+            eventSource.onmessage = function(event) {
+                const eventData = JSON.parse(event.data);
+                if (eventData.message === 'CLOSE') {
+                    eventSource.close();
+                    statusText.textContent = 'Task finished. Redirecting...';
+                    window.location.href = "{{ url_for('main.tasks') }}";
+                } else {
+                    statusText.textContent = eventData.message;
+                }
+            };
+
+            eventSource.onerror = function(err) {
+                console.error("EventSource failed:", err);
+                eventSource.close();
+                statusText.textContent = 'Error receiving status updates. Please check the console.';
+                 setTimeout(() => {
+                    statusOverlay.classList.add('hidden');
+                }, 3000);
+            };
 
         } catch (error) {
             statusText.textContent = `Error: ${error.message}`;
+            if (eventSource) eventSource.close();
             setTimeout(() => {
                 statusOverlay.classList.add('hidden');
                 statusText.textContent = 'Processing your request...'; // Reset text
-            }, 3000);
+            }, 5000);
         }
     }
 
-    function runScrapeStatus() {
-        statusText.textContent = 'Starting task... This may take a few minutes.';
-        statusOverlay.classList.remove('hidden');
-    }
+    scrapeForm.addEventListener('submit', handleFormSubmit);
+    mailForm.addEventListener('submit', handleFormSubmit);
+    autoOfferForm.addEventListener('submit', handleFormSubmit);
+    manualLeadForm.addEventListener('submit', handleFormSubmit);
 
-    function runMailStatus() {
-        statusText.textContent = 'Starting task... This may take a few minutes.';
-        statusOverlay.classList.remove('hidden');
-    }
-
-    function runAutoOfferStatus() {
-        statusText.textContent = 'Scraping website and generating offer...';
-        statusOverlay.classList.remove('hidden');
-    }
-
-    scrapeForm.addEventListener('submit', (e) => handleFormSubmit(e, scrapeForm, runScrapeStatus));
-    mailForm.addEventListener('submit', (e) => handleFormSubmit(e, mailForm, runMailStatus));
-    autoOfferForm.addEventListener('submit', (e) => handleFormSubmit(e, autoOfferForm, runAutoOfferStatus));
-    manualLeadForm.addEventListener('submit', (e) => handleFormSubmit(e, manualLeadForm, runManualLeadStatus));
-
-    function runManualLeadStatus() {
-        statusText.textContent = 'Creating lead and generating email...';
-        statusOverlay.classList.remove('hidden');
-    }
-
-    function displayOfferResult(data) {
-        const oldResult = document.getElementById('offerResult');
-        if (oldResult) oldResult.remove();
-
-        const resultDiv = document.createElement('div');
-        resultDiv.id = 'offerResult';
-        resultDiv.className = "mt-6 p-6 bg-white shadow rounded-lg border border-gray-200";
-
-        resultDiv.innerHTML = `
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">Generated Offer Summary</h3>
-            <p class="text-sm text-indigo-600 mb-4">${data.website}</p>
-            <pre id="offerText" class="whitespace-pre-wrap text-gray-700 text-sm">${data.summary}</pre>
-            <button id="copyOfferBtn" class="mt-4 text-sm px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                Copy Offer
-            </button>
-        `;
-
-        autoOfferForm.parentNode.appendChild(resultDiv);
-
-        document.getElementById('copyOfferBtn').addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('offerText').innerText);
-            const btn = document.getElementById('copyOfferBtn');
-            btn.textContent = 'Copied!';
-            setTimeout(() => { btn.textContent = 'Copy Offer'; }, 2000);
-        });
-    }
 </script>
 {% endblock %}

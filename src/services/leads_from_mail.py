@@ -2,66 +2,53 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import request, send_file, redirect, url_for, current_app
-from flask_login import current_user
 from src import db
-from src.models import Task
-from src.models import Lead
+from src.models import Task, Lead
+from src.utils.status_utils import send_status_update
 import json
-
 
 from src.scrapers.web_scraper import crawl_website
 from src.utils.mail_utils import get_email_list_from_csv, find_websites_from_emails
 from src.utils.prompt_utils import generate_emails
 
-
-def leads_from_mail_service():
-    # 1. Get user input and uploaded file
-    api_key = current_app.config['OPENAI_API_KEY']
-    tone = request.form["tone"]
-    offer = request.form["offer"]
-    selected_prompt = request.form["prompt_language"]
-    additional_instructions = request.form["additional_instructions"]
-    email_file = request.files.get("email_file")
-
-    new_task = Task(
-        user_id=current_user.id,
-        language=selected_prompt,
-        offer=offer,
-        tone=tone,
-        additional_instructions=additional_instructions,
-        status='RUNNING')
-    db.session.add(new_task)
-    db.session.commit()
-
-    if not email_file:
-        return "No file uploaded.", 400
+def leads_from_mail_service(task_id, user_id, api_key, form_data, email_file):
+    task = db.session.get(Task, task_id)
+    if not task:
+        return
 
     try:
-        # 2. Read emails from the uploaded CSV
-        emails = get_email_list_from_csv(email_file)
+        tone = form_data["tone"]
+        offer = form_data["offer"]
+        selected_prompt = form_data["prompt_language"]
+        additional_instructions = form_data["additional_instructions"]
+
+        if not email_file:
+            raise ValueError("No email file content provided.")
+
+        send_status_update(task_id, "Reading emails from provided list...")
+        # Use io.StringIO to treat the string content as a file
+        email_file_like = io.StringIO(email_file)
+        emails = get_email_list_from_csv(email_file_like)
 
         if not emails:
-            return "No emails found in the uploaded file.", 400
-
-        # 3. Find websites from the emails
+            raise ValueError("No emails found in the provided list.")
+        
+        send_status_update(task_id, f"Found {len(emails)} emails. Searching for corresponding websites...")
         leads = find_websites_from_emails(emails)
+        send_status_update(task_id, f"Found websites for {len(leads)} emails. Starting scraping process...")
 
-        # 4. Scrape websites and generate emails
         scrape_results = []
-        for lead in leads:
-            # We must use the link from find_websites_from_emails
+        for i, lead in enumerate(leads):
             if lead.get("link"):
-                print(f"Scraping website for {lead['name']}: {lead['link']}")
+                send_status_update(task_id, f"({i+1}/{len(leads)}) Scraping {lead['name']}'s website...")
                 scraped_data = crawl_website(
                     lead["link"], keywords=["about", "team", "services", "contact"]
                 )
 
                 if scraped_data and scraped_data.get("pages"):
-                    
                     combined_text = "\n\n".join(page_data["text"] for page_data in scraped_data["pages"].values())
                     new_lead = Lead(
-                        task_id=new_task.id,
+                        task_id=task.id,
                         company_name=lead["name"],
                         website_url=lead["link"],
                         contact_email=scraped_data.get("email"),
@@ -69,24 +56,31 @@ def leads_from_mail_service():
                     )
                     db.session.add(new_lead)
                     
-                    
                     result_entry = {
                         "name": lead["name"],
                         "pages": scraped_data["pages"],
-                        "email": scraped_data.get("email")
-                        or lead.get("email"),  # Use email from scraper or original
+                        "email": scraped_data.get("email") or lead.get("email"),
                     }
                     scrape_results.append(result_entry)
             else:
-                print(f"Skipping {lead['name']} because no website was found.")
-                
+                send_status_update(task_id, f"({i+1}/{len(leads)}) Skipping {lead['name']} (no website found).")
+        
         db.session.commit()
 
-        # 5. Generate emails with OpenAI
+        if not scrape_results:
+            send_status_update(task_id, "No websites found to scrape. Finishing task.")
+            task.status = 'SUCCESS'
+            task.output = {"results": []}
+            db.session.commit()
+            send_status_update(task_id, "CLOSE")
+            return
+
+        send_status_update(task_id, "Generating personalized emails...")
         client = OpenAI(api_key=api_key)
         emails_df = generate_emails(
             client,
             scrape_results,
+            task_id, # Pass task_id here
             tone,
             offer,
             prompt_filename=selected_prompt,
@@ -94,16 +88,17 @@ def leads_from_mail_service():
         )
         
         json_output = emails_df.to_dict(orient="records")
-        new_task.output = {"results": json_output}
-        new_task.status = 'SUCCESS'
+        task.output = {"results": json_output}
+        task.status = 'SUCCESS'
         db.session.commit()
 
-        return redirect(url_for('main.tasks'))
+        send_status_update(task_id, "Task completed successfully!")
+        send_status_update(task_id, "CLOSE")
 
     except Exception as e:
-        
-        new_task.status = 'FAILURE'
-        new_task.output = {"error": str(e)}
+        print(f"Error in leads_from_mail_service for task {task_id}: {e}")
+        task.status = 'FAILURE'
+        task.output = {"error": str(e)}
         db.session.commit()
-        
-        return f"An error occurred: {str(e)}", 500
+        send_status_update(task_id, f"An error occurred: {str(e)}")
+        send_status_update(task_id, "CLOSE")

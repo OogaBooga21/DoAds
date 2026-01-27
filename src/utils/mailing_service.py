@@ -22,7 +22,7 @@ def send_email(to_address, subject, body):
 
         SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL')
 
-        sender = {"name": "DoAds Lead Gen", "email": SENDER_EMAIL}
+        sender = {"name": "Daniela Gruia", "email": SENDER_EMAIL}
         to = [{"email": to_address}]
 
         REPLY_TO_EMAIL = os.environ.get('BREVO_REPLY_TO_EMAIL')

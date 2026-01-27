@@ -1,44 +1,36 @@
-from flask import request, redirect, url_for, current_app
-from flask_login import current_user
 from openai import OpenAI
 from src import db
 from src.models import Task, Lead
+from src.utils.status_utils import send_status_update
 from src.scrapers.web_scraper import crawl_website
 from src.utils.prompt_utils import generate_emails
 import pandas as pd
 
-def manual_lead_service():
-    company_name = request.form["company_name"]
-    contact_email = request.form["contact_email"]
-    website_url = request.form["website_url"]
-    offer = request.form["offer"]
-    tone = request.form["tone"]
-    additional_instructions = request.form["additional_instructions"]
-    selected_prompt = request.form["prompt_language"]
-    api_key = current_app.config['OPENAI_API_KEY']
-
-    new_task = Task(
-        user_id=current_user.id,
-        language=selected_prompt,
-        offer=offer,
-        tone=tone,
-        additional_instructions=additional_instructions,
-        status='RUNNING'
-    )
-    db.session.add(new_task)
-    db.session.commit()
+def manual_lead_service(task_id, user_id, api_key, form_data):
+    task = db.session.get(Task, task_id)
+    if not task:
+        return
 
     try:
-        print(f"Scraping website for {company_name}: {website_url}")
+        company_name = form_data["company_name"]
+        contact_email = form_data["contact_email"]
+        website_url = form_data["website_url"]
+        offer = form_data["offer"]
+        tone = form_data["tone"]
+        additional_instructions = form_data["additional_instructions"]
+        selected_prompt = form_data["prompt_language"]
+
+        send_status_update(task_id, f"Scraping website for {company_name}: {website_url}")
         scraped_data = crawl_website(
             website_url, keywords=["about", "team", "services", "contact"]
         )
 
         if scraped_data and scraped_data.get("pages"):
+            send_status_update(task_id, "Website scraped. Generating email...")
             combined_text = "\n\n".join(page_data["text"] for page_data in scraped_data["pages"].values())
             
             new_lead = Lead(
-                task_id=new_task.id,
+                task_id=task.id,
                 company_name=company_name,
                 website_url=website_url,
                 contact_email=contact_email,
@@ -57,6 +49,7 @@ def manual_lead_service():
             emails_df = generate_emails(
                 client,
                 scrape_results,
+                task_id, # Pass task_id here
                 tone,
                 offer,
                 prompt_filename=selected_prompt,
@@ -64,18 +57,19 @@ def manual_lead_service():
             )
             
             json_output = emails_df.to_dict(orient="records")
-            new_task.output = {"results": json_output}
-            new_task.status = 'SUCCESS'
+            task.output = {"results": json_output}
+            task.status = 'SUCCESS'
             db.session.commit()
+            send_status_update(task_id, "Task completed successfully!")
         else:
-            new_task.status = 'FAILURE'
-            new_task.output = {"error": "Could not scrape website."}
-            db.session.commit()
-
-        return redirect(url_for('main.tasks'))
+            raise ValueError("Could not scrape website.")
 
     except Exception as e:
-        new_task.status = 'FAILURE'
-        new_task.output = {"error": str(e)}
+        print(f"Error in manual_lead_service for task {task_id}: {e}")
+        task.status = 'FAILURE'
+        task.output = {"error": str(e)}
         db.session.commit()
-        return f"An error occurred: {str(e)}", 500
+        send_status_update(task_id, f"An error occurred: {str(e)}")
+    finally:
+        send_status_update(task_id, "CLOSE")
+

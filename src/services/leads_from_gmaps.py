@@ -2,60 +2,47 @@ import io
 import json
 import pandas as pd
 from openai import OpenAI
-from flask import Blueprint, render_template, request, send_file, redirect, url_for, current_app
-from flask_login import current_user
 from src import db
-from src.models import Task
-from src.models import Lead
+from src.models import Task, Lead
+from src.utils.status_utils import send_status_update
 import json
 
 from src.scrapers.gmaps_scraper import get_leads_from_Maps
 from src.scrapers.web_scraper import crawl_website
 from src.utils.prompt_utils import generate_emails
 
-def leads_from_gmaps_service():
-    query = request.form["query"]
-    api_key = current_app.config['OPENAI_API_KEY']
-    tone = request.form["tone"]
-    offer = request.form["offer"]
-    gmail_api_key = request.form.get("gmail_api_key")  #.get for optional field
-    selected_prompt = request.form["prompt_language"]
-    additional_instructions = request.form["additional_instructions"]
-    max_results = request.form.get("max_results", 5, type=int)
-    
-    if max_results > 50:
-        max_results = 50
-        
-    new_task = Task(
-        user_id=current_user.id,
-        language=selected_prompt,
-        offer=offer,
-        tone=tone,
-        query=query,
-        additional_instructions=additional_instructions,
-        status='RUNNING')
-    db.session.add(new_task)
-    db.session.commit()
+def leads_from_gmaps_service(task_id, user_id, api_key, form_data):
+    task = db.session.get(Task, task_id)
+    if not task:
+        return
 
     try:
-        # Google Maps
-        leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
+        query = form_data["query"]
+        tone = form_data["tone"]
+        offer = form_data["offer"]
+        selected_prompt = form_data["prompt_language"]
+        additional_instructions = form_data["additional_instructions"]
+        max_results = int(form_data.get("max_results", 5))
 
-        # Scrape
+        if max_results > 50:
+            max_results = 50
+
+        send_status_update(task_id, f"Starting Google Maps search for: {query}")
+        leads = get_leads_from_Maps(query, max_results=max_results, search_for=1)
+        send_status_update(task_id, f"Found {len(leads)} potential leads. Starting website scraping...")
+
         scrape_results = []
-        for lead in leads:
+        for i, lead in enumerate(leads):
             if lead.get("link") and lead["link"] != "No Website":
-                print(f"Scraping website for {lead['name']}: {lead['link']}")
+                send_status_update(task_id, f"({i+1}/{len(leads)}) Scraping {lead['name']}'s website...")
                 scraped_data = crawl_website(
                     lead["link"], keywords=["about", "team", "services", "contact"]
                 )
 
                 if scraped_data and scraped_data.get("pages"):
-                    
                     combined_text = "\n\n".join(page_data["text"] for page_data in scraped_data["pages"].values())
-                
                     new_lead = Lead(
-                        task_id=new_task.id,
+                        task_id=task.id,
                         company_name=lead["name"],
                         website_url=lead["link"],
                         contact_email=scraped_data.get("email"),
@@ -70,15 +57,24 @@ def leads_from_gmaps_service():
                     }
                     scrape_results.append(result_entry)
             else:
-                print(f"Skipping {lead['name']} because no website was found.")
-                
+                send_status_update(task_id, f"({i+1}/{len(leads)}) Skipping {lead['name']} (no website).")
+        
         db.session.commit()
 
-        # Generate
+        if not scrape_results:
+            send_status_update(task_id, "No websites found to scrape. Finishing task.")
+            task.status = 'SUCCESS'
+            task.output = {"results": []}
+            db.session.commit()
+            send_status_update(task_id, "CLOSE")
+            return
+
+        send_status_update(task_id, "Generating personalized emails...")
         client = OpenAI(api_key=api_key)
         emails_df = generate_emails(
             client,
             scrape_results,
+            task_id, # Pass task_id here
             tone,
             offer,
             prompt_filename=selected_prompt,
@@ -86,16 +82,17 @@ def leads_from_gmaps_service():
         )
         
         json_output = emails_df.to_dict(orient="records")
-        new_task.output = {"results": json_output}
-        new_task.status = 'SUCCESS'
+        task.output = {"results": json_output}
+        task.status = 'SUCCESS'
         db.session.commit()
         
-        return redirect(url_for('main.tasks'))
+        send_status_update(task_id, "Task completed successfully!")
+        send_status_update(task_id, "CLOSE")
 
     except Exception as e:
-        
-        new_task.status = 'FAILURE'
-        new_task.output = {"error": str(e)}
+        print(f"Error in leads_from_gmaps_service for task {task_id}: {e}")
+        task.status = 'FAILURE'
+        task.output = {"error": str(e)}
         db.session.commit()
-        
-        return f"An error occurred: {str(e)}", 500
+        send_status_update(task_id, f"An error occurred: {str(e)}")
+        send_status_update(task_id, "CLOSE")

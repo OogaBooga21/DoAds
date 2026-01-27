@@ -30,9 +30,12 @@ def load_prompt_template(filename="eng_prompt.txt"):
         raise
 
 
+from src.utils.status_utils import send_status_update
+
 def generate_emails(
     client,
     scraped_data,
+    task_id,
     tone="Friendly and professional",
     offer="We would love to explore potential collaboration opportunities between our companies.",
     prompt_filename="eng_prompt.txt",
@@ -44,8 +47,11 @@ def generate_emails(
     websites = scraped_data
 
     results = []
+    total_websites = len(websites)
 
-    for website in websites:
+    for i, website in enumerate(websites):
+        company_name = website.get('name', 'Unknown')
+        send_status_update(task_id, f"Generating email {i+1} of {total_websites} for {company_name}...")
         try:
             company_name = website["name"]
             pages = website["pages"]

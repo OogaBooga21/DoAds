@@ -1,26 +1,27 @@
 import json
-import pandas as pd
 from openai import OpenAI
-from flask import request, current_app
-
+from src import db
+from src.models import Task
+from src.utils.status_utils import send_status_update
 from src.scrapers.web_scraper import crawl_website
 
-
-def auto_offer_service():
-    api_key = current_app.config['OPENAI_API_KEY']
-    url = request.form["url"]
-    additional_info = request.form.get("additional_info", "")
+def auto_offer_service(task_id, user_id, api_key, form_data):
+    task = db.session.get(Task, task_id)
+    if not task:
+        return
 
     try:
+        url = form_data["url"]
+        additional_info = form_data.get("additional_info", "")
+
+        send_status_update(task_id, f"Scraping website: {url}")
         client = OpenAI(api_key=api_key)
-        print(f"[INFO] Scraping website for Auto-Offer: {url}")
         scraped_data = crawl_website(url)
 
         if not scraped_data or not scraped_data.get("pages"):
-            return {
-                "error": "Could not extract meaningful content from the website."
-            }, 400
+            raise ValueError("Could not extract meaningful content from the website.")
 
+        send_status_update(task_id, "Website content scraped. Generating offer summary...")
         combined_text = "\n\n".join(
             [
                 f"Page: {page_name}\n{page_data['text']}"
@@ -57,7 +58,17 @@ Create a concise, professional offer summary in 3-5 paragraphs.
 
         summary_text = response.choices[0].message.content.strip()
 
-        return {"website": url, "summary": summary_text}
+        task.output = {"website": url, "summary": summary_text}
+        task.status = 'SUCCESS'
+        db.session.commit()
+
+        send_status_update(task_id, "Task completed successfully!")
+        send_status_update(task_id, "CLOSE")
 
     except Exception as e:
-        return {"error": str(e)}, 500
+        print(f"Error in auto_offer_service for task {task_id}: {e}")
+        task.status = 'FAILURE'
+        task.output = {"error": str(e)}
+        db.session.commit()
+        send_status_update(task_id, f"An error occurred: {str(e)}")
+        send_status_update(task_id, "CLOSE")
