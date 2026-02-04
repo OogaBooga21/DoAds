@@ -15,4 +15,4 @@ psycopg2-binary
 requests                                                                                                                                    
 tldextract                                                                                                                                  
 readability-lxml
-\nrq
+rq
