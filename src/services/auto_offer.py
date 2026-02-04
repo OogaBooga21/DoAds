@@ -10,6 +10,9 @@ def auto_offer_service(task_id, user_id, api_key, form_data):
     if not task:
         return
 
+    task.status = 'RUNNING'
+    db.session.commit()
+
     try:
         url = form_data["url"]
         additional_info = form_data.get("additional_info", "")

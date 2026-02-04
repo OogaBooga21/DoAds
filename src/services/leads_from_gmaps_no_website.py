@@ -9,6 +9,9 @@ def leads_from_gmaps_no_website_service(task_id, user_id, api_key, form_data):
     if not task:
         return
 
+    task.status = 'RUNNING'
+    db.session.commit()
+
     try:
         query = form_data["query"]
         max_results = int(form_data.get("max_results", 10))

@@ -7,44 +7,34 @@ import json
 from datetime import datetime
 from sqlalchemy import or_
 from sqlalchemy.orm.attributes import flag_modified
-import queue
-import threading
-import time
 
 main_bp = Blueprint('main', __name__)
 
-from .utils.status_utils import status_updates, send_status_update
+from .utils.status_utils import send_status_update
 from .services.leads_from_gmaps import leads_from_gmaps_service
 from .services.leads_from_gmaps_no_website import leads_from_gmaps_no_website_service
 from .services.leads_from_mail import leads_from_mail_service
 from .services.auto_offer import auto_offer_service
 from .services.manual_lead import manual_lead_service
 from .utils.mailing_service import send_email, process_inbound_email, process_transactional_event
-
-def run_in_background(target, *args, **kwargs):
-    """Runs a function in a background thread with app context."""
-    app = current_app._get_current_object()
-    def wrapper(*args, **kwargs):
-        with app.app_context():
-            target(*args, **kwargs)
-    thread = threading.Thread(target=wrapper, args=args, kwargs=kwargs)
-    thread.start()
+from worker_utils import execute_job_with_context
 
 @main_bp.route('/task_status/<int:task_id>')
 def task_status(task_id):
+    redis_conn = current_app.redis_conn # Capture the redis connection here
+    
     def generate():
-        while True:
-            try:
-                update = status_updates.get(timeout=30) # Timeout to prevent hanging
-                if update['task_id'] == task_id:
-                    if update['message'] == "CLOSE":
-                        yield f"data: {json.dumps({'message': 'CLOSE'})}\n\n"
-                        break
-                    yield f"data: {json.dumps(update)}\n\n"
-            except queue.Empty:
-                # Send a keep-alive comment every so often to prevent timeout
-                yield ": keep-alive\n\n"
-                
+        pubsub = redis_conn.pubsub() # Use the captured connection
+        pubsub.subscribe(f'task_status:{task_id}')
+        
+        for message in pubsub.listen():
+            if message['type'] == 'message':
+                data = json.loads(message['data'])
+                if data.get('message') == 'CLOSE':
+                    yield f"data: {json.dumps({'message': 'CLOSE'})}\n\n"
+                    break
+                yield f"data: {message['data']}\n\n"
+
     return Response(generate(), mimetype='text/event-stream')
 
 
@@ -164,8 +154,6 @@ def download_task_output(task_id):
         as_attachment=True,
         download_name=f"task_{task_id}_output.json"
     )
-
-
 @main_bp.route('/run_from_gmaps', methods=['POST'])
 @login_required
 def run_from_gmaps():
@@ -179,8 +167,8 @@ def run_from_gmaps():
 
         new_task = Task(
             user_id=current_user.id, 
-            status='RUNNING', 
-            query=query,
+            status='PENDING', 
+            query=f"Google Maps Scraper::: {query}", # Combine type and query
             language=form["prompt_language"],
             offer=form.get("offer"),
             tone=form.get("tone"),
@@ -196,7 +184,9 @@ def run_from_gmaps():
             "form_data": {**form.to_dict(), "query": query} # Pass the single query
         }
         
-        run_in_background(leads_from_gmaps_service, **task_args)
+        current_app.task_queue.enqueue(execute_job_with_context, leads_from_gmaps_service, **task_args)
+        new_task.status = 'QUEUED'
+        db.session.commit()
         task_ids.append(new_task.id)
 
     return jsonify({"task_ids": task_ids})
@@ -215,8 +205,8 @@ def run_from_gmaps_no_website():
 
         new_task = Task(
             user_id=current_user.id, 
-            status='RUNNING', 
-            query=f"NO_WEBSITE: {query}",
+            status='PENDING', 
+            query=f"Google Maps No Website Scraper::: {query}", # Combine type and query
             language="N/A",
             offer="N/A",
             tone="N/A",
@@ -232,7 +222,9 @@ def run_from_gmaps_no_website():
             "form_data": {**form.to_dict(), "query": query}
         }
         
-        run_in_background(leads_from_gmaps_no_website_service, **task_args)
+        current_app.task_queue.enqueue(execute_job_with_context, leads_from_gmaps_no_website_service, **task_args)
+        new_task.status = 'QUEUED'
+        db.session.commit()
         task_ids.append(new_task.id)
 
     return jsonify({"task_ids": task_ids})
@@ -251,8 +243,8 @@ def run_from_mail():
 
         new_task = Task(
             user_id=current_user.id, 
-            status='RUNNING', 
-            query="Mail to Lead",
+            status='PENDING', 
+            query=f"Mail to Lead::: {file.filename}", # Combine type and query
             language=form["prompt_language"],
             offer=form.get("offer"),
             tone=form.get("tone"),
@@ -269,7 +261,9 @@ def run_from_mail():
             "email_file": file.read().decode('utf-8')
         }
         
-        run_in_background(leads_from_mail_service, **task_args)
+        current_app.task_queue.enqueue(execute_job_with_context, leads_from_mail_service, **task_args)
+        new_task.status = 'QUEUED'
+        db.session.commit()
         task_ids.append(new_task.id)
 
     return jsonify({"task_ids": task_ids})
@@ -281,8 +275,8 @@ def auto_offer():
     form = request.form
     new_task = Task(
         user_id=current_user.id, 
-        status='RUNNING', 
-        query=f"Auto-Offer for {form['url']}",
+        status='PENDING', 
+        query=f"Auto Offer::: {form['url']}", # Combine type and query
         language='ro_prompt.txt', # Hardcoded as per service prompt
         offer=form.get("additional_info") # Using 'additional_info' as offer for this task type
     )
@@ -296,7 +290,9 @@ def auto_offer():
         "form_data": form.to_dict()
     }
 
-    run_in_background(auto_offer_service, **task_args)
+    current_app.task_queue.enqueue(execute_job_with_context, auto_offer_service, **task_args)
+    new_task.status = 'QUEUED'
+    db.session.commit()
     return jsonify({"task_id": new_task.id})
 
 
@@ -306,8 +302,8 @@ def manual_lead():
     form = request.form
     new_task = Task(
         user_id=current_user.id, 
-        status='RUNNING', 
-        query=f"Manual Lead: {form['company_name']}",
+        status='PENDING', 
+        query=f"Manual Lead::: {form['company_name']}", # Combine type and query
         language=form["prompt_language"],
         offer=form.get("offer"),
         tone=form.get("tone"),
@@ -323,7 +319,9 @@ def manual_lead():
         "form_data": form.to_dict()
     }
 
-    run_in_background(manual_lead_service, **task_args)
+    current_app.task_queue.enqueue(execute_job_with_context, manual_lead_service, **task_args)
+    new_task.status = 'QUEUED'
+    db.session.commit()
     return jsonify({"task_id": new_task.id})
 
 
@@ -491,4 +489,7 @@ def update_email_body(task_id, result_index):
         db.session.rollback()
         current_app.logger.error(f"Error updating email body: {e}")
         return jsonify({"success": False, "message": "An internal error occurred."}), 500
+
+
+
 

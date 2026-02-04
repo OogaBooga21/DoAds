@@ -16,6 +16,9 @@ def leads_from_gmaps_service(task_id, user_id, api_key, form_data):
     if not task:
         return
 
+    task.status = 'RUNNING'
+    db.session.commit()
+
     try:
         query = form_data["query"]
         tone = form_data["tone"]

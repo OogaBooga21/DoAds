@@ -16,6 +16,9 @@ def leads_from_mail_service(task_id, user_id, api_key, form_data, email_file):
     if not task:
         return
 
+    task.status = 'RUNNING'
+    db.session.commit()
+
     try:
         tone = form_data["tone"]
         offer = form_data["offer"]

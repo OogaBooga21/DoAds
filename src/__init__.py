@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
+from redis import Redis
+from rq import Queue
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -56,6 +58,11 @@ def create_app(test_config=None):
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login' # Set the route to redirect to for login
     login_manager.login_message = "Please log in to access this page."
+
+    # Initialize Redis and RQ Queue
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+    app.redis_conn = Redis.from_url(redis_url)
+    app.task_queue = Queue(connection=app.redis_conn)
     
     # Import Blueprints
     from .routes import main_bp

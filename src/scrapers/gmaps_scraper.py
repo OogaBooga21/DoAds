@@ -1,3 +1,4 @@
+import re
 import csv
 import time
 
@@ -39,15 +40,21 @@ def combine_results(list1, list2, merge_key="name"):
     return list(merged_data.values())
 
 
-def extract_info(page):
-    panel_locator = page.locator('div[role="main"]').first
-    print(panel_locator.inner_html())
-    name_locator = panel_locator.locator('h1.DUwDvf')
-    website_locator = panel_locator.locator('a[data-value="Website"]')
-    phone_locator = panel_locator.locator('button[data-tooltip="Copy phone number"]')
+def extract_info(card_locator):
+    website_href = "No Website"
+    # Try to find a link with an aria-label containing "website"
+    website_locator = card_locator.locator('a[aria-label*="website" i]').nth(0)
+    if website_locator.count() > 0:
+        website_href = website_locator.get_attribute('href')
+    else:
+        # Fallback: Try to find a link that contains the text "Website" or "Site web"
+        website_locator = card_locator.locator('a:has-text("Website"), a:has-text("Site web")').nth(0)
+        if website_locator.count() > 0:
+            website_href = website_locator.get_attribute('href')
 
-    name = name_locator.inner_text() if name_locator.count() > 0 else "No Name"
-    website_href = website_locator.get_attribute('href') if website_locator.count() > 0 else "No Website"
+    phone_locator = card_locator.locator('button[data-tooltip="Copy phone number"]').nth(0)
+
+    name = card_locator.get_attribute('aria-label') if card_locator.count() > 0 else "No Name"
     phone = phone_locator.get_attribute('aria-label') if phone_locator.count() > 0 else "No Phone"
     
     if phone and "Copy phone number" in phone:
@@ -109,17 +116,15 @@ def get_leads_from_Maps(
             time.sleep(2)
 
         results = []
-        business_cards = page.locator('a[href*="/place/"]').all()
+        business_cards = page.locator('div[role="article"][class*="Nv2PK"]').all()
         
         total = min(len(business_cards), max_results)
         print(f"[INFO] Found {len(business_cards)} businesses. Getting top {total}.")
 
         for i in range(total):
             card = business_cards[i]
-            card.click()
-            page.wait_for_timeout(2000) # wait for the page to load
             
-            info = extract_info(page)
+            info = extract_info(card)
             
             if search_for == 1 and info['link'] == "No Website":
                 continue

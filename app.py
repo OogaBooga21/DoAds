@@ -2,6 +2,8 @@ from src import create_app
 import os
 from dotenv import load_dotenv
 import click
+from redis import Redis
+from rq import Queue
 
 load_dotenv(dotenv_path='variables.env')
 load_dotenv(dotenv_path='sendgrid.env')
@@ -9,6 +11,7 @@ load_dotenv(dotenv_path='brevo.env')
 load_dotenv(dotenv_path='openai.env')
 
 app = create_app()
+
 
 @app.cli.command("setup-webhooks")
 @click.argument("base_url")

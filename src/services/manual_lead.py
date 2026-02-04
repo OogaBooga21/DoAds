@@ -11,6 +11,9 @@ def manual_lead_service(task_id, user_id, api_key, form_data):
     if not task:
         return
 
+    task.status = 'RUNNING'
+    db.session.commit()
+
     try:
         company_name = form_data["company_name"]
         contact_email = form_data["contact_email"]
