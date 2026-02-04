@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, send_file, jsonify, abort, request, Response, current_app
+from flask import Blueprint, render_template, send_file, jsonify, abort, request, Response, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from .models import Task, Lead, Email
 from . import db
@@ -6,6 +6,7 @@ import io
 import json
 from datetime import datetime
 from sqlalchemy import or_
+from sqlalchemy.orm.attributes import flag_modified
 import queue
 import threading
 import time
@@ -14,6 +15,7 @@ main_bp = Blueprint('main', __name__)
 
 from .utils.status_utils import status_updates, send_status_update
 from .services.leads_from_gmaps import leads_from_gmaps_service
+from .services.leads_from_gmaps_no_website import leads_from_gmaps_no_website_service
 from .services.leads_from_mail import leads_from_mail_service
 from .services.auto_offer import auto_offer_service
 from .services.manual_lead import manual_lead_service
@@ -83,13 +85,44 @@ def tasks():
 @login_required
 def emails():
     page = request.args.get('page', 1, type=int)
-    pagination = db.paginate(
-        db.select(Email).join(Lead).join(Task).filter(Task.user_id == current_user.id).order_by(
-            Email.sent_at.desc()),
-        page=page,
-        per_page=30
-    )
-    return render_template('emails.html', pagination=pagination)
+    tab = request.args.get('tab', 'sent') # Default to 'sent' tab
+
+    if tab == 'sent':
+        query = db.select(Email).join(Lead).join(Task).filter(
+            Task.user_id == current_user.id,
+            Email.direction == 'OUTBOUND'
+        ).order_by(Email.sent_at.desc())
+    elif tab == 'replied':
+        query = db.select(Email).join(Lead).join(Task).filter(
+            Task.user_id == current_user.id,
+            Email.direction == 'OUTBOUND',
+            Email.status == 'REPLIED'
+        ).order_by(Email.sent_at.desc())
+    else:
+        # Optional: handle invalid tab parameter, e.g., redirect or show an error
+        return "Invalid tab", 404
+
+    pagination = db.paginate(query, page=page, per_page=30)
+    
+    return render_template('emails.html', pagination=pagination, current_tab=tab)
+
+
+@main_bp.route('/delete_email/<int:email_id>', methods=['POST'])
+@login_required
+def delete_email(email_id):
+    email = db.session.get(Email, email_id)
+    if not email:
+        abort(404)
+
+    # Optional: Check if the email belongs to the current user to prevent unauthorized deletion
+    if email.lead.task.user_id != current_user.id:
+        abort(403)
+
+    db.session.delete(email)
+    db.session.commit()
+    
+    # Redirect back to the emails page, maintaining the current tab
+    return redirect(url_for('main.emails', tab=request.args.get('tab', 'sent')))
 
 
 @main_bp.route('/related_emails/<email>')
@@ -164,6 +197,42 @@ def run_from_gmaps():
         }
         
         run_in_background(leads_from_gmaps_service, **task_args)
+        task_ids.append(new_task.id)
+
+    return jsonify({"task_ids": task_ids})
+
+
+@main_bp.route('/run_from_gmaps_no_website', methods=['POST'])
+@login_required
+def run_from_gmaps_no_website():
+    form = request.form
+    queries = form["query"].strip().splitlines()
+    task_ids = []
+
+    for query in queries:
+        if not query:
+            continue
+
+        new_task = Task(
+            user_id=current_user.id, 
+            status='RUNNING', 
+            query=f"NO_WEBSITE: {query}",
+            language="N/A",
+            offer="N/A",
+            tone="N/A",
+            additional_instructions="N/A"
+        )
+        db.session.add(new_task)
+        db.session.commit()
+
+        task_args = {
+            "task_id": new_task.id,
+            "user_id": current_user.id,
+            "api_key": current_app.config['OPENAI_API_KEY'],
+            "form_data": {**form.to_dict(), "query": query}
+        }
+        
+        run_in_background(leads_from_gmaps_no_website_service, **task_args)
         task_ids.append(new_task.id)
 
     return jsonify({"task_ids": task_ids})
@@ -389,4 +458,37 @@ def send_generated_email(task_id, result_index):
         db.session.rollback()
         return jsonify({"success": False, "message": "Failed to send email."}), 500
 
+
+@main_bp.route('/update_email_body/<int:task_id>/<int:result_index>', methods=['POST'])
+@login_required
+def update_email_body(task_id, result_index):
+    task = db.session.get(Task, task_id)
+    if not task or task.user_id != current_user.id:
+        abort(404)
+
+    data = request.get_json()
+    new_body = data.get('body')
+
+    if new_body is None:
+        return jsonify({"success": False, "message": "No new body provided."}), 400
+
+    try:
+        # Modify the JSON data in the output field
+        task.output['results'][result_index]['email_body'] = new_body
+        
+        # Mark the 'output' field as modified so SQLAlchemy detects the change
+        flag_modified(task, "output")
+        
+        db.session.add(task)
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "Email content updated successfully."})
+    except (IndexError, KeyError) as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating email body due to invalid structure: {e}")
+        return jsonify({"success": False, "message": "Invalid task data structure."}), 500
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating email body: {e}")
+        return jsonify({"success": False, "message": "An internal error occurred."}), 500
 

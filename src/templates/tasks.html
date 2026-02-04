@@ -40,8 +40,9 @@
                         {% if task.status == 'SUCCESS' and task.output %}
                         <div class="flex items-center justify-center space-x-4">
                             <button onclick="showLeadsModal({{ task.id }})" class="text-gray-400 hover:text-purple-600" title="Show Leads">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
                             </button>
                             <a href="{{ url_for('main.download_task_output', task_id=task.id) }}" class="text-gray-400 hover:text-indigo-600" title="Download">
@@ -49,14 +50,9 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                             </a>
-                            <button class="text-gray-300 cursor-not-allowed" title="Auto-Mail (Coming Soon)" disabled>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                            </button>
                             <button onclick="showManualMailModal({{ task.id }})" class="text-gray-400 hover:text-green-600" title="Manual-Mail">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                             </button>
                         </div>
@@ -167,8 +163,16 @@
                                         <p class="text-xs text-gray-600"><strong>Original Contact:</strong> {{ result.contact_email }}</p>
                                         <hr class="my-2">
                                         <p class="font-medium"><strong>Subject:</strong> {{ result.subject }}</p>
-                                        <div class="mt-2 p-3 bg-white border rounded-md">
+                                        <div class="mt-2 p-3 bg-white border rounded-md" id="email-body-display-{{ task.id }}-{{ loop.index0 }}">
                                             <pre class="whitespace-pre-wrap text-sm text-gray-800">{{ result.email_body }}</pre>
+                                            <button onclick="toggleEmailEdit({{ task.id }}, {{ loop.index0 }}, true)" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Edit</button>
+                                        </div>
+                                        <div class="mt-2 p-3 bg-white border rounded-md hidden" id="email-body-edit-{{ task.id }}-{{ loop.index0 }}">
+                                            <textarea class="w-full h-48 p-2 border rounded-md text-sm text-gray-800">{{ result.email_body }}</textarea>
+                                            <div class="mt-2 text-right">
+                                                <button onclick="toggleEmailEdit({{ task.id }}, {{ loop.index0 }}, false)" class="text-sm text-gray-600 hover:text-gray-800 mr-2">Cancel</button>
+                                                <button onclick="saveEmailUpdate({{ task.id }}, {{ loop.index0 }})" class="text-sm text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-md">Save</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -238,12 +242,74 @@
         });
     }
 
+    function toggleEmailEdit(taskId, resultIndex, showEdit) {
+        const displayDiv = document.getElementById(`email-body-display-${taskId}-${resultIndex}`);
+        const editDiv = document.getElementById(`email-body-edit-${taskId}-${resultIndex}`);
+        if (showEdit) {
+            displayDiv.classList.add('hidden');
+            editDiv.classList.remove('hidden');
+        } else {
+            displayDiv.classList.remove('hidden');
+            editDiv.classList.add('hidden');
+        }
+    }
+
+    function saveEmailUpdate(taskId, resultIndex) {
+        const editDiv = document.getElementById(`email-body-edit-${taskId}-${resultIndex}`);
+        const newBody = editDiv.querySelector('textarea').value;
+
+        fetch(`/update_email_body/${taskId}/${resultIndex}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ body: newBody })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the display view
+                const displayDiv = document.getElementById(`email-body-display-${taskId}-${resultIndex}`);
+                displayDiv.querySelector('pre').innerText = newBody;
+
+                // Update the underlying JSON data object for future sends
+                const taskDataElement = document.getElementById(`task-data-${taskId}`);
+                let taskData = JSON.parse(taskDataElement.textContent);
+                taskData[resultIndex].email_body = newBody;
+                taskDataElement.textContent = JSON.stringify(taskData);
+
+                // Switch back to display view
+                toggleEmailEdit(taskId, resultIndex, false);
+                alert('Email content updated successfully.');
+            } else {
+                alert('Error updating email: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving.');
+        });
+    }
+
+    function getLatestEmailBody(taskId, resultIndex) {
+        const editDiv = document.getElementById(`email-body-edit-${taskId}-${resultIndex}`);
+        if (!editDiv.classList.contains('hidden')) {
+            // If edit view is active, get content from textarea
+            return editDiv.querySelector('textarea').value;
+        } else {
+            // Otherwise, get it from the display <pre> tag
+            const displayDiv = document.getElementById(`email-body-display-${taskId}-${resultIndex}`);
+            return displayDiv.querySelector('pre').innerText;
+        }
+    }
+
     function sendGeneratedEmail(button, resultIndex, taskId, recipientEmail) {
         const taskDataElement = document.getElementById(`task-data-${taskId}`);
         const taskData = JSON.parse(taskDataElement.textContent);
         const result = taskData[resultIndex];
         const subject = result.subject;
-        const body = result.email_body;
+        const body = getLatestEmailBody(taskId, resultIndex); // Use helper to get latest content
 
         const originalButtonText = button.innerHTML;
         button.innerHTML = 'Sending...';
@@ -290,7 +356,7 @@
             const result = taskData[resultIndex];
             emailsToSend.push({
                 subject: result.subject,
-                body: result.email_body,
+                body: getLatestEmailBody(taskId, resultIndex), // Use helper here too
                 email: result.contact_email,
                 result_index: resultIndex
             });

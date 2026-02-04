@@ -11,6 +11,7 @@ from importlib.resources import files
 def load_prompt_template(filename="eng_prompt.txt"):
     """Load the email generation prompt template from the resources file."""
     try:
+        # Construct the path to the resource file within the 'resources' directory
         resource_path = files('src.resources') / filename
         
         # Open the file using the resolved path object
@@ -18,15 +19,17 @@ def load_prompt_template(filename="eng_prompt.txt"):
             return file.read()
             
     except FileNotFoundError:
-        # Update error message for clarity
-        print(f"Error: Prompt file '{filename}' not found in src/resources.")
-        # Best practice is to raise a custom exception, but for now, re-raising works
-        # The original code used exit(1), which is bad in a Flask app. 
-        # Raising an exception is safer.
-        raise FileNotFoundError(f"Missing resource file: {filename}")
+        # If the primary prompt is not found, try a generic fallback
+        try:
+            print(f"Warning: Prompt file '{filename}' not found. Trying 'no_website_prompt.txt'.")
+            resource_path = files('src.resources') / "no_website_prompt.txt"
+            with open(resource_path, "r", encoding="utf-8") as file:
+                return file.read()
+        except FileNotFoundError:
+            print(f"Error: Neither '{filename}' nor 'no_website_prompt.txt' found in src/resources.")
+            raise FileNotFoundError(f"Missing resource file: {filename}")
     except Exception as e:
         print(f"Error reading prompt template: {str(e)}")
-        # Raise an exception instead of exit(1)
         raise
 
 
@@ -159,4 +162,73 @@ def generate_emails(
             print(f"✗ Error processing {website.get('name', 'Unknown')}: {str(e)}")
 
     # This is also new: we RETURN the results as a DataFrame
+    return pd.DataFrame(results)
+
+
+def generate_emails_no_website(
+    client,
+    leads_data,
+    task_id,
+    tone="Friendly and professional",
+    offer="We specialize in creating professional websites for businesses.",
+    prompt_filename="no_website_prompt.txt",
+    additional_instructions="",
+):
+    prompt_template = load_prompt_template(prompt_filename)
+    
+    results = []
+    total_leads = len(leads_data)
+
+    for i, lead in enumerate(leads_data):
+        company_name = lead.get('name', 'Unknown')
+        send_status_update(task_id, f"Generating email {i+1} of {total_leads} for {company_name}...")
+        
+        try:
+            # Since there's no website, we use the company name and other details
+            prompt = prompt_template.replace("[COMPANY NAME]", company_name)
+            prompt = prompt.replace("[INSERT TONE HERE]", tone)
+            prompt = prompt.replace("[INSERT A SHORT DESCRIPTION OF YOUR SERVICE / OFFER]", offer)
+
+            if additional_instructions:
+                prompt += f"\n\nAdditional Instructions:\n{additional_instructions}"
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a skilled copywriter specializing in crafting compelling offers for businesses without a web presence.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=1000,
+            )
+
+            email_content = response.choices[0].message.content
+
+            # Simplified parsing for "no website" emails
+            if "\n\n" in email_content:
+                subject, body = email_content.split("\n\n", 1)
+                subject = re.sub(r"^\s*(\*\*|)?(subject|subiect):\s*(\*\*|)?\s*", "", subject, flags=re.IGNORECASE).strip()
+            else:
+                subject = f"A Web Presence for {company_name}"
+                body = email_content
+
+            results.append(
+                {
+                    "company_name": company_name,
+                    "contact_email": lead.get("email"), # This will likely be None
+                    "subject": subject,
+                    "email_body": body,
+                    "ranked_list": "N/A",
+                    "activity_domain": "N/A",
+                }
+            )
+
+            print(f"✓ Generated offer for {company_name}")
+
+        except Exception as e:
+            print(f"✗ Error processing {company_name}: {str(e)}")
+
     return pd.DataFrame(results)

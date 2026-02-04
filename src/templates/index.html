@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Tab Navigation -->
 <div class="mb-6 border-b border-gray-200">
     <div class="flex space-x-4">
         <button id="scrapeTab" class="tab-btn active-tab">Scrape Tool</button>
+        <button id="noWebsiteTab" class="tab-btn inactive-tab">No Website</button>
         <button id="mailTab" class="tab-btn inactive-tab">Mail to Lead</button>
         <button id="autoOfferTab" class="tab-btn inactive-tab">Auto-Offer</button>
         <button id="manualLeadTab" class="tab-btn inactive-tab">Manual Lead</button>
@@ -66,6 +66,40 @@ Marketing agencies in Los Angeles"></textarea>
                 <div>
                     <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Generate & Download JSON
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="noWebsiteContent" class="tab-content hidden">
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold text-gray-900">No Website Lead Generation</h1>
+            <p class="mt-2 text-gray-600">Find businesses on Google Maps that don't have a website and get their phone numbers.</p>
+
+            <form id="noWebsiteForm" action="/run_from_gmaps_no_website" method="post" class="mt-8 space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <!-- Search Settings -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Search Settings</h2>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="query_no_website" class="block text-sm font-medium text-gray-700">Google Maps Queries (one per line)</label>
+                            <textarea name="query" id="query_no_website" required rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g., Restaurants in San Francisco
+Hair salons in Miami"></textarea>
+                        </div>
+                        <div>
+                            <label for="max_results_no_website" class="block text-sm font-medium text-gray-700">Max Results (up to 100)</label>
+                            <input type="number" name="max_results" id="max_results_no_website" value="10" min="1" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Find Leads & Phone Numbers
                     </button>
                 </div>
             </form>
@@ -238,37 +272,45 @@ Marketing agencies in Los Angeles"></textarea>
 <script>
     // --- Tab Switching Logic ---
     const scrapeTab = document.getElementById('scrapeTab');
+    const noWebsiteTab = document.getElementById('noWebsiteTab');
     const mailTab = document.getElementById('mailTab');
     const autoOfferTab = document.getElementById('autoOfferTab');
     const manualLeadTab = document.getElementById('manualLeadTab');
+    
     const scrapeContent = document.getElementById('scrapeContent');
+    const noWebsiteContent = document.getElementById('noWebsiteContent');
     const mailContent = document.getElementById('mailContent');
     const autoOfferContent = document.getElementById('autoOfferContent');
     const manualLeadContent = document.getElementById('manualLeadContent');
-    const tabs = [scrapeTab, mailTab, autoOfferTab, manualLeadTab];
+
+    const tabs = [scrapeTab, noWebsiteTab, mailTab, autoOfferTab, manualLeadTab];
+    const contents = [scrapeContent, noWebsiteContent, mailContent, autoOfferContent, manualLeadContent];
 
     function switchTabs(activeTab) {
-        tabs.forEach(tab => {
+        tabs.forEach((tab, index) => {
+            const content = contents[index];
             const isActive = tab === activeTab;
+            
             tab.classList.toggle('active-tab', isActive);
             tab.classList.toggle('inactive-tab', !isActive);
+            content.classList.toggle('hidden', !isActive);
         });
-        scrapeContent.classList.toggle('hidden', activeTab !== scrapeTab);
-        mailContent.classList.toggle('hidden', activeTab !== mailTab);
-        autoOfferContent.classList.toggle('hidden', activeTab !== autoOfferTab);
-        manualLeadContent.classList.toggle('hidden', activeTab !== manualLeadTab);
     }
 
     scrapeTab.addEventListener('click', () => switchTabs(scrapeTab));
+    noWebsiteTab.addEventListener('click', () => switchTabs(noWebsiteTab));
     mailTab.addEventListener('click', () => switchTabs(mailTab));
     autoOfferTab.addEventListener('click', () => switchTabs(autoOfferTab));
     manualLeadTab.addEventListener('click', () => switchTabs(manualLeadTab));
+    
     switchTabs(scrapeTab); // Set default
 
     // --- Form Submission & Status Logic ---
     const statusOverlay = document.getElementById('statusOverlay');
     const statusText = document.getElementById('statusText');
+    
     const scrapeForm = document.getElementById('scrapeForm');
+    const noWebsiteForm = document.getElementById('noWebsiteForm');
     const mailForm = document.getElementById('mailForm');
     const autoOfferForm = document.getElementById('autoOfferForm');
     const manualLeadForm = document.getElementById('manualLeadForm');
@@ -345,6 +387,7 @@ Marketing agencies in Los Angeles"></textarea>
     }
 
     scrapeForm.addEventListener('submit', handleFormSubmit);
+    noWebsiteForm.addEventListener('submit', handleFormSubmit);
     mailForm.addEventListener('submit', handleFormSubmit);
     autoOfferForm.addEventListener('submit', handleFormSubmit);
     manualLeadForm.addEventListener('submit', handleFormSubmit);

@@ -39,33 +39,21 @@ def combine_results(list1, list2, merge_key="name"):
     return list(merged_data.values())
 
 
-def extract_info(page, business_cards, max_results):
-    total = min(business_cards.count(), max_results)
-    print(
-        f"[INFO] Found {business_cards.count()} businesses. Getting top {total} names and links."
-    )
+def extract_info(page):
+    panel_locator = page.locator('div[role="main"]').first
+    print(panel_locator.inner_html())
+    name_locator = panel_locator.locator('h1.DUwDvf')
+    website_locator = panel_locator.locator('a[data-value="Website"]')
+    phone_locator = panel_locator.locator('button[data-tooltip="Copy phone number"]')
 
-    results = []
+    name = name_locator.inner_text() if name_locator.count() > 0 else "No Name"
+    website_href = website_locator.get_attribute('href') if website_locator.count() > 0 else "No Website"
+    phone = phone_locator.get_attribute('aria-label') if phone_locator.count() > 0 else "No Phone"
+    
+    if phone and "Copy phone number" in phone:
+        phone = phone.replace("Copy phone number", "").strip()
 
-    for i in range(total):
-        card = business_cards.nth(i)
-        card.scroll_into_view_if_needed()
-        name = card.get_attribute("aria-label")
-
-        website_locator = page.locator('a[data-value="Website"]')
-
-        website_href = "No Website"  # Default value
-        # Check if the locator found any elements
-        if website_locator.count() > 0:
-            href = card.first.get_attribute("href")
-            if href:
-                website_href = href
-                print(f"  [SUCCESS] Found website: {website_href}")
-        else:
-            print("  [INFO] No website link found for this business.")
-
-        results.append({"name": name, "link": website_href})
-    return results
+    return {"name": name, "link": website_href, "phone": phone}
 
 
 def get_leads_from_Maps(
@@ -120,16 +108,24 @@ def get_leads_from_Maps(
             print(f"[INFO] Scrolling... ({i+1}/8)")
             time.sleep(2)
 
-        results1 = []
-        results2 = []
-        # Collect business cards
-        if search_for == 0 or search_for == 1:
-            business_cards = page.locator('a[data-value="Website"]')  # with website
-            results1 = extract_info(page, business_cards, max_results)
-        if search_for == 0 or search_for == 2:
-            business_cards = page.locator('a[href*="/place/"]')  # without website
-            results2 = extract_info(page, business_cards, max_results)
+        results = []
+        business_cards = page.locator('a[href*="/place/"]').all()
+        
+        total = min(len(business_cards), max_results)
+        print(f"[INFO] Found {len(business_cards)} businesses. Getting top {total}.")
 
-        results = combine_results(results1, results2, merge_key="name")
+        for i in range(total):
+            card = business_cards[i]
+            card.click()
+            page.wait_for_timeout(2000) # wait for the page to load
+            
+            info = extract_info(page)
+            
+            if search_for == 1 and info['link'] == "No Website":
+                continue
+            if search_for == 2 and info['link'] != "No Website":
+                continue
+                
+            results.append(info)
 
         return results
