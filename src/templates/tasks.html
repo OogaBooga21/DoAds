@@ -31,13 +31,20 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% set parts = task.query.split(':::') %}
-                        {{ parts[0] if parts|length > 1 else 'N/A' }}
+                        {% if task.query %}
+                            {% set parts = task.query.split(':::') %}
+                            {{ parts[0] if parts|length > 1 else 'N/A' }}
+                        {% else %}
+                            N/A
+                        {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {% set parts = task.query.split(':::') %}
-                        {{ parts[1] if parts|length > 1 else task.query }}
-                    </td>
+                        {% if task.query %}
+                            {% set parts = task.query.split(':::') %}
+                            {{ parts[1] if parts|length > 1 else task.query }}
+                        {% else %}
+                            N/A
+                        {% endif %}
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.language }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
